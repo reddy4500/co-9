@@ -113,7 +113,7 @@
     <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar-left">
-            <img src="logo.jpeg" class="logo" alt="CO-DOCTOR Logo">
+            <img src="logo.jpg" class="logo" alt="CO-DOCTOR Logo">
             <span class="brand-name">CO-DOCTOR</span>
         </div>
         <ul class="navbar-center">
@@ -176,7 +176,7 @@
                 box.className = 'system-box';
                 box.textContent = `${system.id}. ${system.name}`;
                 box.onclick = () => {
-                    window.location.href = `subsystem.html?system=${system.id}`;
+                    window.location.href = `system.html?system=${system.id}`;
                 };
                 grid.appendChild(box);
             });

@@ -10,6 +10,7 @@ function register() {
         errorElem.innerText = "Please fill in all fields.";
         return;
     }
+
     // Optional: Validate phone number format (10 digits)
     if (!/^\d{10}$/.test(phone)) {
         errorElem.innerText = "Please enter a valid 10-digit phone number.";
@@ -53,16 +54,29 @@ function login() {
 
 // Submit Details Function (unchanged, but you can add fullname/phone if needed)
 function submitDetails() {
-    const college = document.getElementById('college').value;
-    const batch = document.getElementById('batch').value;
-    const name = document.getElementById('name').value.trim();
-    if (college && batch && name) {
-        localStorage.setItem('college', college);
-        localStorage.setItem('batch', batch);
-        localStorage.setItem('name', name);
+    // You may want to update this to reflect your new flow
+    const system = document.getElementById('system-select') ? document.getElementById('system-select').value : '';
+    const subsystem = document.getElementById('subsystem-select') ? document.getElementById('subsystem-select').value : '';
+    if (system && subsystem) {
+        // Save assignment to localStorage
+        const username = localStorage.getItem('username');
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        const user = users[username];
+        let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+        if (!assignments[system]) assignments[system] = {};
+        if (!assignments[system][subsystem]) assignments[system][subsystem] = [];
+        // Prevent duplicate assignment
+        if (!assignments[system][subsystem].some(u => u.username === username)) {
+            assignments[system][subsystem].push({
+                fullname: user.fullname,
+                phone: user.phone,
+                username: username
+            });
+            localStorage.setItem('assignments', JSON.stringify(assignments));
+        }
         window.location.href = 'index.html'; // Redirect to home page
     } else {
-        alert("Please fill all fields!");
+        alert("Please select both system and subsystem!");
     }
 }
 
@@ -72,14 +86,15 @@ function loadHome() {
     const username = localStorage.getItem('username');
     const users = JSON.parse(localStorage.getItem('users') || '{}');
     const user = users[username];
-    const batch = localStorage.getItem('batch');
-    if (!loggedIn || !user || !batch) {
+    if (!loggedIn || !user) {
         window.location.href = 'login.html';
     } else {
         const fullname = user.fullname || username;
         const phone = user.phone || 'N/A';
-        document.getElementById('doctor-credentials').innerText =
-            `Logged in as: Dr. ${fullname} (Batch: ${batch}) | Phone: ${phone}`;
+        if (document.getElementById('doctor-credentials')) {
+            document.getElementById('doctor-credentials').innerText =
+                `Logged in as: Dr. ${fullname} | Phone: ${phone}`;
+        }
     }
 }
 

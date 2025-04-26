@@ -69,18 +69,35 @@
     </style>
 </head>
 <body>
-    <div class="form-container">
-        <h2>Choose Your System</h2>
-        <div class="greeting" id="greeting"></div>
-        <select id="system-select">
-            <option value="">Select System</option>
-        </select>
-        <select id="subsystem-select" style="display:none;">
-            <option value="">Select Subsystem</option>
-        </select>
-        <button onclick="submitAssignment()" class="btn" id="submit-btn" style="display:none;">Submit</button>
-        <div id="success-message"></div>
-    </div>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <img src="logo.jpg" class="logo" alt="CO-DOCTOR Logo">
+            <span class="brand-name">CO-DOCTOR</span>
+        </div>
+        <ul class="navbar-center">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="#">About</a></li>
+        </ul>
+        <div class="navbar-right">
+            <a href="logout.html" class="login-btn">Logout</a>
+        </div>
+    </nav>
+
+    <section class="main-section">
+        <div class="form-container">
+            <h2>Choose Your System</h2>
+            <div class="greeting" id="greeting"></div>
+            <select id="system-select">
+                <option value="">Select System</option>
+            </select>
+            <select id="subsystem-select" style="display:none;">
+                <option value="">Select Subsystem</option>
+            </select>
+            <button onclick="submitAssignment()" class="btn" id="submit-btn" style="display:none;">Submit</button>
+            <div id="success-message"></div>
+        </div>
+    </section>
     <script>
         // Define systems and subsystems
         const systems = [
