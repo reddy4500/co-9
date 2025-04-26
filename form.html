@@ -3,25 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Details</title>
+    <title>Select System & Subsystem | CO-DOCTOR</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            min-height: 100vh;
+            background: #f5f8fa;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .form-container {
+            background: #fff;
+            padding: 40px 32px 32px 32px;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+            min-width: 320px;
+            margin: 60px auto 0 auto;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 {
+            color: #003366;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+        .greeting {
+            color: #0188df;
+            margin-bottom: 22px;
+            font-size: 1.07em;
+            text-align: center;
+        }
+        select, .btn {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            border: 1px solid #b0c4de;
+            border-radius: 7px;
+            font-size: 1em;
+            outline: none;
+            transition: border 0.2s;
+        }
+        select:focus {
+            border: 1.5px solid #0188df;
+        }
+        .btn {
+            background: #0188df;
+            color: #fff;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 0;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        #success-message {
+            color: #27ae60;
+            margin-top: 10px;
+            font-size: 1em;
+            min-height: 22px;
+        }
+    </style>
 </head>
 <body>
     <div class="form-container">
-        <h2>Enter Your Details</h2>
-        <select id="college">
-            <option value="">Select College</option>
-            <option value="College A">College A</option>
-            <option value="College B">College B</option>
+        <h2>Choose Your System</h2>
+        <div class="greeting" id="greeting"></div>
+        <select id="system-select">
+            <option value="">Select System</option>
         </select>
-        <select id="batch">
-            <option value="">Select Batch</option>
-            <option value="Batch 1">Batch 1</option>
-            <option value="Batch 2">Batch 2</option>
+        <select id="subsystem-select" style="display:none;">
+            <option value="">Select Subsystem</option>
         </select>
-        <input type="text" id="name" placeholder="Your Name">
-        <button onclick="submitDetails()" class="btn">Submit</button>
+        <button onclick="submitAssignment()" class="btn" id="submit-btn" style="display:none;">Submit</button>
+        <div id="success-message"></div>
     </div>
-    <script src="script.js"></script>
+    <script>
+        // Define systems and subsystems
+        const systems = [
+            {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
+            {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
+            {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
+            {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
+            {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
+            {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
+            {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
+            {id: 8, name: "Casualty", subsystems: [
+                "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
+                "COTM (medical/surgical)",
+                "DSO (surgery)",
+                "Pulmo (casualty/other)",
+                "ENT",
+                "Ophthal",
+                "Psy"
+            ]},
+            {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
+            {id: 10, name: "OBG & Labour Room", subsystems: [
+                "Labour Room (Morning/Night)",
+                "Admissions",
+                "HDU",
+                "Labour Room Intern",
+                "POW 1",
+                "POW 2",
+                "PHW",
+                "OP"
+            ]},
+            {id: 11, name: "Anaesthesia", subsystems: [
+                "SS H",
+                "Old Building",
+                "Full Duty"
+            ]}
+        ];
+
+        // Greet user
+        function greetUser() {
+            const username = localStorage.getItem('username');
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const user = users[username];
+            if (user) {
+                document.getElementById('greeting').innerHTML =
+                    `Welcome, <b>${user.fullname}</b><br>Phone: <b>${user.phone}</b>`;
+            } else {
+                document.getElementById('greeting').innerHTML = "";
+            }
+        }
+
+        // Populate system select
+        function populateSystems() {
+            const systemSelect = document.getElementById('system-select');
+            systems.forEach(system => {
+                const opt = document.createElement('option');
+                opt.value = system.id;
+                opt.textContent = system.name;
+                systemSelect.appendChild(opt);
+            });
+        }
+
+        // Populate subsystems on system select
+        document.getElementById('system-select').addEventListener('change', function() {
+            const systemId = this.value;
+            const subsystemSelect = document.getElementById('subsystem-select');
+            subsystemSelect.innerHTML = '<option value="">Select Subsystem</option>';
+            if (systemId) {
+                const system = systems.find(s => s.id == systemId);
+                system.subsystems.forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub;
+                    opt.textContent = sub;
+                    subsystemSelect.appendChild(opt);
+                });
+                subsystemSelect.style.display = '';
+                document.getElementById('submit-btn').style.display = '';
+            } else {
+                subsystemSelect.style.display = 'none';
+                document.getElementById('submit-btn').style.display = 'none';
+            }
+        });
+
+        // Handle submit
+        function submitAssignment() {
+            const systemId = document.getElementById('system-select').value;
+            const subsystem = document.getElementById('subsystem-select').value;
+            const msg = document.getElementById('success-message');
+            msg.textContent = "";
+
+            if (!systemId || !subsystem) {
+                msg.style.color = "#c0392b";
+                msg.textContent = "Please select both system and subsystem.";
+                return;
+            }
+
+            // Get user info
+            const username = localStorage.getItem('username');
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const user = users[username];
+
+            // Get existing assignments
+            let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+            if (!assignments[systemId]) assignments[systemId] = {};
+            if (!assignments[systemId][subsystem]) assignments[systemId][subsystem] = [];
+
+            // Prevent duplicate assignment
+            if (!assignments[systemId][subsystem].some(u => u.username === username)) {
+                assignments[systemId][subsystem].push({
+                    fullname: user.fullname,
+                    phone: user.phone,
+                    username: username
+                });
+                localStorage.setItem('assignments', JSON.stringify(assignments));
+                msg.style.color = "#27ae60";
+                msg.textContent = "Assignment successful!";
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+            } else {
+                msg.style.color = "#c0392b";
+                msg.textContent = "You are already assigned here.";
+            }
+        }
+
+        // On page load
+        greetUser();
+        populateSystems();
+    </script>
 </body>
 </html>

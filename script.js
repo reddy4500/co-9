@@ -1,22 +1,32 @@
 // Register Function
 function register() {
+    const fullname = document.getElementById('reg-fullname').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
     const username = document.getElementById('reg-username').value.trim();
     const password = document.getElementById('reg-password').value.trim();
     const errorElem = document.getElementById('register-error');
 
-    if (!username || !password) {
-        errorElem.innerText = "Please enter both username and password.";
+    if (!fullname || !phone || !username || !password) {
+        errorElem.innerText = "Please fill in all fields.";
+        return;
+    }
+    // Optional: Validate phone number format (10 digits)
+    if (!/^\d{10}$/.test(phone)) {
+        errorElem.innerText = "Please enter a valid 10-digit phone number.";
         return;
     }
 
-    // Get users from localStorage or create new object
     let users = JSON.parse(localStorage.getItem('users') || '{}');
     if (users[username]) {
         errorElem.innerText = "Username already exists. Please choose another.";
         return;
     }
 
-    users[username] = password;
+    users[username] = {
+        password: password,
+        fullname: fullname,
+        phone: phone
+    };
     localStorage.setItem('users', JSON.stringify(users));
     errorElem.style.color = "green";
     errorElem.innerText = "Registration successful! Redirecting to login...";
@@ -32,7 +42,7 @@ function login() {
     const errorElem = document.getElementById('login-error');
 
     let users = JSON.parse(localStorage.getItem('users') || '{}');
-    if (users[username] && users[username] === password) {
+    if (users[username] && users[username].password === password) {
         localStorage.setItem('loggedIn', 'true');
         localStorage.setItem('username', username);
         window.location.href = 'form.html'; // Go to details form after login
@@ -41,7 +51,7 @@ function login() {
     }
 }
 
-// Submit Details Function (unchanged)
+// Submit Details Function (unchanged, but you can add fullname/phone if needed)
 function submitDetails() {
     const college = document.getElementById('college').value;
     const batch = document.getElementById('batch').value;
@@ -56,16 +66,20 @@ function submitDetails() {
     }
 }
 
-// Load Home Page with Credentials (unchanged)
+// Load Home Page with Credentials (shows full name and phone if available)
 function loadHome() {
     const loggedIn = localStorage.getItem('loggedIn');
-    const name = localStorage.getItem('name');
+    const username = localStorage.getItem('username');
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    const user = users[username];
     const batch = localStorage.getItem('batch');
-    if (!loggedIn || !name || !batch) {
+    if (!loggedIn || !user || !batch) {
         window.location.href = 'login.html';
     } else {
+        const fullname = user.fullname || username;
+        const phone = user.phone || 'N/A';
         document.getElementById('doctor-credentials').innerText =
-            `Logged in as: Dr. ${name} (Batch: ${batch})`;
+            `Logged in as: Dr. ${fullname} (Batch: ${batch}) | Phone: ${phone}`;
     }
 }
 
@@ -73,3 +87,4 @@ function loadHome() {
 if (document.getElementById('doctor-credentials')) {
     loadHome();
 }
+
