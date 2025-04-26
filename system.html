@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>System Details | CO-DOCTOR</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .main-section {
+            max-width: 1100px;
+            margin: 40px auto 0 auto;
+            padding: 0 16px;
+        }
+        .system-title {
+            font-weight: 600;
+            font-size: 1.3em;
+            color: #003366;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .subsystem-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .subsystem-box {
+            background: #e6f0ff;
+            color: #0056b3;
+            border-radius: 18px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            width: 260px;
+            min-height: 50px;
+            margin-bottom: 10px;
+            padding: 20px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            text-align: center;
+        }
+        @media (max-width: 700px) {
+            .subsystem-box {
+                width: 95vw;
+                font-size: 1em;
+                padding: 14px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <img src="logo.jpeg" class="logo" alt="CO-DOCTOR Logo">
+            <span class="brand-name">CO-DOCTOR</span>
+        </div>
+        <ul class="navbar-center">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="#">About</a></li>
+        </ul>
+        <div class="navbar-right">
+            <a href="login.html" class="login-btn">Login</a>
+        </div>
+    </nav>
+
+    <section class="main-section">
+        <div id="system-title" class="system-title"></div>
+        <div class="subsystem-grid" id="subsystem-grid"></div>
+    </section>
+    <script>
+        const systems = [
+            {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
+            {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
+            {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
+            {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
+            {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
+            {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
+            {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
+            {id: 8, name: "Casualty", subsystems: [
+                "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
+                "COTM (medical/surgical)",
+                "DSO (surgery)",
+                "Pulmo (casualty/other)",
+                "ENT",
+                "Ophthal",
+                "Psy"
+            ]},
+            {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
+            {id: 10, name: "OBG & Labour Room", subsystems: [
+                "Labour Room (Morning/Night)",
+                "Admissions",
+                "HDU",
+                "Labour Room Intern",
+                "POW 1",
+                "POW 2",
+                "PHW",
+                "OP"
+            ]},
+            {id: 11, name: "Anaesthesia", subsystems: [
+                "SS H",
+                "Old Building",
+                "Full Duty"
+            ]}
+        ];
+
+        function getSystemId() {
+            const params = new URLSearchParams(window.location.search);
+            return parseInt(params.get('system'), 10);
+        }
+
+        function renderSubsystems() {
+            const systemId = getSystemId();
+            const system = systems.find(s => s.id === systemId);
+            const title = document.getElementById('system-title');
+            const grid = document.getElementById('subsystem-grid');
+            if (!system) {
+                title.innerHTML = "System not found.";
+                grid.innerHTML = `<a href='index.html'>Go Home</a>`;
+                return;
+            }
+            title.innerHTML = `${systemId}. ${system.name}`;
+            let html = '';
+            for (const sub of system.subsystems) {
+                html += `<div class="subsystem-box">${sub}</div>`;
+            }
+            grid.innerHTML = html;
+        }
+        renderSubsystems();
+    </script>
+</body>
+</html>
+
+
