@@ -5,48 +5,107 @@
     <title>Doctors Availability | CO-DOCTOR</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Updated CSS - removed display:none from subsystem-list */
-        .subsystem-list {
-            margin-top: 15px;
-            background: #e6f0ff;
-            border-radius: 12px;
-            padding: 15px;
-            width: 100%;
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f8fa;
+            margin: 0;
         }
-        /* Rest of the styles remain the same */
-        .subsystem-item {
-            margin-bottom: 12px;
-            padding: 10px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        .navbar {
+            background: #003366;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            height: 60px;
+            justify-content: space-between;
         }
-        .subsystem-header {
-            color: #003366;
-            font-weight: 600;
-            margin-bottom: 8px;
+        .navbar-left {
+            display: flex;
+            align-items: center;
         }
-        .doctor-card {
-            padding: 8px;
-            margin: 5px 0;
-            background: #f8f9fa;
-            border-radius: 4px;
-            font-size: 0.95em;
+        .logo {
+            height: 38px;
+            margin-right: 12px;
         }
-        .doctor-card span {
-            display: block;
+        .brand-name {
+            font-weight: bold;
+            font-size: 1.3em;
         }
-        .doctor-name {
+        .navbar-center {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 20px;
+        }
+        .navbar-center li a {
+            color: #fff;
+            text-decoration: none;
             font-weight: 500;
-            color: #2c3e50;
+            padding: 8px 12px;
+            border-radius: 4px;
         }
-        .doctor-phone {
-            color: #7f8c8d;
-            font-size: 0.9em;
+        .navbar-center li a.active, .navbar-center li a:hover {
+            background: #0056b3;
         }
-        .no-assignments {
-            color: #95a5a6;
-            font-style: italic;
+        .navbar-right .login-btn {
+            color: #fff;
+            text-decoration: none;
+            background: #0056b3;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .navbar-right .login-btn:hover {
+            background: #0074d9;
+        }
+        .main-section {
+            max-width: 1100px;
+            margin: 40px auto 0 auto;
+            padding: 0 16px;
+        }
+        .main-section h1 {
+            color: #003366;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .system-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        .system-box {
+            background: #0188df;
+            color: #fff;
+            border-radius: 18px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            width: 320px;
+            min-height: 70px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            padding: 24px 28px 18px 28px;
+            font-size: 1.18em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .system-box:hover {
+            background: #0056b3;
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        }
+        @media (max-width: 700px) {
+            .system-box {
+                width: 95vw;
+                min-width: unset;
+                font-size: 1em;
+                padding: 18px 8px 14px 8px;
+            }
         }
     </style>
 </head>
@@ -73,7 +132,7 @@
     </section>
 
     <script>
-        // Complete systems array
+        // Full systems array with all subsystems
         const systems = [
             {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
             {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
@@ -109,70 +168,21 @@
             ]}
         ];
 
-        // Load assignments and render systems
+        // Render all systems as clickable blue boxes
         function renderSystems() {
-            const systemGrid = document.getElementById('system-grid');
-            const assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
-
+            const grid = document.getElementById('system-grid');
             systems.forEach(system => {
-                const systemBox = document.createElement('div');
-                systemBox.className = 'system-box';
-                systemBox.innerHTML = `
-                    <div class="system-title">${system.id}. ${system.name}</div>
-                    <div class="subsystem-list" id="subs-${system.id}"></div>
-                `;
-
-                const subsContainer = systemBox.querySelector(`#subs-${system.id}`);
-                system.subsystems.forEach(sub => {
-                    const subDiv = document.createElement('div');
-                    subDiv.className = 'subsystem-item';
-                    subDiv.innerHTML = `
-                        <div class="subsystem-header">${sub}</div>
-                        <div class="doctor-list" id="docs-${system.id}-${sub}"></div>
-                    `;
-
-                    const doctors = assignments[system.id]?.[sub] || [];
-                    const docsDiv = subDiv.querySelector(`#docs-${system.id}-${sub}`);
-                    
-                    if(doctors.length > 0) {
-                        doctors.forEach(doctor => {
-                            const doctorCard = document.createElement('div');
-                            doctorCard.className = 'doctor-card';
-                            doctorCard.innerHTML = `
-                                <span class="doctor-name">${doctor.fullname}</span>
-                                <span class="doctor-phone">${doctor.phone}</span>
-                            `;
-                            docsDiv.appendChild(doctorCard);
-                        });
-                    } else {
-                        docsDiv.innerHTML = `<div class="no-assignments">No doctors assigned yet</div>`;
-                    }
-
-                    subsContainer.appendChild(subDiv);
-                });
-
-                systemGrid.appendChild(systemBox);
+                const box = document.createElement('div');
+                box.className = 'system-box';
+                box.textContent = `${system.id}. ${system.name}`;
+                box.onclick = () => {
+                    window.location.href = `subsystem.html?system=${system.id}`;
+                };
+                grid.appendChild(box);
             });
         }
 
-        // Check login status
-        function loadHome() {
-            const loggedIn = localStorage.getItem('loggedIn');
-            const username = localStorage.getItem('username');
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            
-            if (!loggedIn || !users[username]) {
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            renderSystems();
-        }
-
-        // Initial load
-        loadHome();
+        renderSystems();
     </script>
 </body>
 </html>
-
-
