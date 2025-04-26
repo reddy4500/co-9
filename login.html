@@ -68,6 +68,15 @@
             font-size: 0.98em;
             min-height: 20px;
         }
+        p.register-link {
+            margin-top: 10px;
+            font-size: 0.97em;
+        }
+        p.register-link a {
+            color: #0188df;
+            text-decoration: underline;
+            cursor: pointer;
+        }
         @media (max-width: 500px) {
             .login-container {
                 min-width: 90vw;
@@ -100,6 +109,7 @@
             <input type="password" id="password" placeholder="Password" autocomplete="current-password">
             <button onclick="login()" class="btn">Login</button>
             <p id="login-error"></p>
+            <p class="register-link">Don't have an account? <a href="register.html">Register here</a></p>
         </div>
     </section>
     <script src="script.js"></script>

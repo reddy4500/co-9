@@ -21,6 +21,15 @@
         .register-container input { width: 240px; padding: 12px 14px; margin-bottom: 18px; border: 1px solid #b0c4de; border-radius: 7px; font-size: 1em; }
         .btn { width: 100%; padding: 12px 0; background: #0188df; color: #fff; border: none; border-radius: 7px; font-size: 1.08em; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
         #register-error { color: #c0392b; margin-top: 8px; font-size: 0.98em; min-height: 20px; }
+        p.register-link {
+            margin-top: 10px;
+            font-size: 0.97em;
+        }
+        p.register-link a {
+            color: #0188df;
+            text-decoration: underline;
+            cursor: pointer;
+        }
         @media (max-width: 500px) {
             .register-container { min-width: 90vw; padding: 24px 8px; }
             .register-container input { width: 90vw; min-width: 0; }
@@ -47,9 +56,7 @@
             <input type="password" id="reg-password" placeholder="Password" autocomplete="new-password">
             <button onclick="register()" class="btn">Register</button>
             <p id="register-error"></p>
-            <p style="margin-top:10px;font-size:0.97em;">
-                Already have an account? <a href="login.html" style="color:#0188df;text-decoration:underline;">Login here</a>
-            </p>
+            <p class="register-link">Already have an account? <a href="login.html">Login here</a></p>
         </div>
     </section>
     <script src="script.js"></script>
