@@ -5,14 +5,15 @@
     <title>Doctors Availability | CO-DOCTOR</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Existing styles remain unchanged */
+        /* Updated CSS - removed display:none from subsystem-list */
         .subsystem-list {
             margin-top: 15px;
             background: #e6f0ff;
             border-radius: 12px;
             padding: 15px;
-            display: none;
+            width: 100%;
         }
+        /* Rest of the styles remain the same */
         .subsystem-item {
             margin-bottom: 12px;
             padding: 10px;
@@ -47,13 +48,10 @@
             color: #95a5a6;
             font-style: italic;
         }
-        .system-box.active {
-            background: #0056b3;
-        }
     </style>
 </head>
 <body>
-    <!-- Navbar (unchanged) -->
+    <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar-left">
             <img src="logo.jpeg" class="logo" alt="CO-DOCTOR Logo">
@@ -75,11 +73,40 @@
     </section>
 
     <script>
-        // Systems data (same as form.html)
+        // Complete systems array
         const systems = [
             {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
             {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
-            // ... include all systems from form.html ...
+            {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
+            {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
+            {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
+            {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
+            {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
+            {id: 8, name: "Casualty", subsystems: [
+                "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
+                "COTM (medical/surgical)",
+                "DSO (surgery)",
+                "Pulmo (casualty/other)",
+                "ENT",
+                "Ophthal",
+                "Psy"
+            ]},
+            {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
+            {id: 10, name: "OBG & Labour Room", subsystems: [
+                "Labour Room (Morning/Night)",
+                "Admissions",
+                "HDU",
+                "Labour Room Intern",
+                "POW 1",
+                "POW 2",
+                "PHW",
+                "OP"
+            ]},
+            {id: 11, name: "Anaesthesia", subsystems: [
+                "SS H",
+                "Old Building",
+                "Full Duty"
+            ]}
         ];
 
         // Load assignments and render systems
@@ -109,12 +136,13 @@
                     
                     if(doctors.length > 0) {
                         doctors.forEach(doctor => {
-                            docsDiv.innerHTML += `
-                                <div class="doctor-card">
-                                    <span class="doctor-name">${doctor.fullname}</span>
-                                    <span class="doctor-phone">${doctor.phone}</span>
-                                </div>
+                            const doctorCard = document.createElement('div');
+                            doctorCard.className = 'doctor-card';
+                            doctorCard.innerHTML = `
+                                <span class="doctor-name">${doctor.fullname}</span>
+                                <span class="doctor-phone">${doctor.phone}</span>
                             `;
+                            docsDiv.appendChild(doctorCard);
                         });
                     } else {
                         docsDiv.innerHTML = `<div class="no-assignments">No doctors assigned yet</div>`;
@@ -146,4 +174,5 @@
     </script>
 </body>
 </html>
+
 
