@@ -52,6 +52,7 @@
             }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
     <!-- Navbar -->
@@ -74,68 +75,58 @@
         <div class="subsystem-grid" id="subsystem-grid"></div>
     </section>
     <script>
-        const systems = [
-            {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
-            {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
-            {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
-            {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
-            {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
-            {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
-            {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
-            {id: 8, name: "Casualty", subsystems: [
-                "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
-                "COTM (medical/surgical)",
-                "DSO (surgery)",
-                "Pulmo (casualty/other)",
-                "ENT",
-                "Ophthal",
-                "Psy"
-            ]},
-            {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
-            {id: 10, name: "OBG & Labour Room", subsystems: [
-                "Labour Room (Morning/Night)",
-                "Admissions",
-                "HDU",
-                "Labour Room Intern",
-                "POW 1",
-                "POW 2",
-                "PHW",
-                "OP"
-            ]},
-            {id: 11, name: "Anaesthesia", subsystems: [
-                "SS H",
-                "Old Building",
-                "Full Duty"
-            ]}
-        ];
+        // --- Supabase Initialization ---
+        const SUPABASE_URL = "https://kxzkuphsoihlzjwbhghl.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4emt1cGhzb2lobHpqd2JoZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3NjcyNTIsImV4cCI6MjA2MTM0MzI1Mn0.6Fa0GLY82aMO19boMFeAfWypeuMflxi90jpOq12s0K8";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         function getSystemId() {
             const params = new URLSearchParams(window.location.search);
             return parseInt(params.get('system'), 10);
         }
 
-        function renderSubsystems() {
+        async function renderSubsystems() {
             const systemId = getSystemId();
-            const system = systems.find(s => s.id === systemId);
             const title = document.getElementById('system-title');
             const grid = document.getElementById('subsystem-grid');
-            if (!system) {
+            title.textContent = 'Loading...';
+            grid.innerHTML = '';
+
+            if (!systemId) {
+                title.innerHTML = "Invalid system ID";
+                grid.innerHTML = `<a href='index.html'>Go Home</a>`;
+                return;
+            }
+
+            // Fetch system and subsystems from Supabase
+            const { data: system, error } = await supabase
+                .from('systems')
+                .select('id, name, subsystems ( id, name )')
+                .eq('id', systemId)
+                .single();
+
+            if (error || !system) {
                 title.innerHTML = "System not found.";
                 grid.innerHTML = `<a href='index.html'>Go Home</a>`;
                 return;
             }
-            title.innerHTML = `${systemId}. ${system.name}`;
-            grid.innerHTML = '';
-            for (const sub of system.subsystems) {
-                const div = document.createElement('div');
-                div.className = 'subsystem-box';
-                div.textContent = sub;
-                div.onclick = function() {
-                    window.location.href = `userlist.html?system=${systemId}&subsystem=${encodeURIComponent(sub)}`;
-                };
-                grid.appendChild(div);
+
+            title.innerHTML = `${system.id}. ${system.name}`;
+            if (system.subsystems && system.subsystems.length > 0) {
+                for (const sub of system.subsystems) {
+                    const div = document.createElement('div');
+                    div.className = 'subsystem-box';
+                    div.textContent = sub.name;
+                    div.onclick = function() {
+                        window.location.href = `userlist.html?system=${systemId}&subsystem=${encodeURIComponent(sub.name)}`;
+                    };
+                    grid.appendChild(div);
+                }
+            } else {
+                grid.innerHTML = '<div style="color:#888;">No subsystems found for this system.</div>';
             }
         }
+
         renderSubsystems();
     </script>
 </body>

@@ -2,6 +2,29 @@
 const SUPABASE_URL = "https://kxzkuphsoihlzjwbhghl.supabase.co";
 const SUPABASE_APIKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4emt1cGhzb2lobHpqd2JoZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3NjcyNTIsImV4cCI6MjA2MTM0MzI1Mn0.6Fa0GLY82aMO19boMFeAfWypeuMflxi90jpOq12s0K8";
 
+// Define systems and subsystems
+const systems = [
+    {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
+    {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
+    {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
+    {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
+    {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
+    {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
+    {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
+    {id: 8, name: "Casualty", subsystems: [
+        "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
+        "COTM (medical/surgical)",
+        "DSO (surgery)",
+        "Pulmo (casualty/other)",
+        "ENT",
+        "Ophthal",
+        "Psy"
+    ]},
+    {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
+    {id: 10, name: "OBG & Labour Room", subsystems: ["Labour Room (Morning/Night)", "Admissions", "HDU", "Labour Room Intern", "POW 1", "POW 2", "PHW", "OP"]},
+    {id: 11, name: "Anaesthesia", subsystems: ["SS H", "Old Building", "Full Duty"]}
+];
+
 // ----------- User Registration -----------
 async function register() {
     const fullname = document.getElementById('reg-fullname').value.trim();
@@ -15,6 +38,7 @@ async function register() {
         errorElem.innerText = "Please fill in all fields.";
         return;
     }
+
     if (!/^\d{10}$/.test(phone)) {
         errorElem.style.color = "red";
         errorElem.innerText = "Please enter a valid 10-digit phone number.";
@@ -33,7 +57,7 @@ async function register() {
     }
 
     // Create new user
-    const { error } = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
         method: "POST",
         headers: {
             apikey: SUPABASE_APIKEY,
@@ -42,11 +66,12 @@ async function register() {
             Prefer: "return=representation"
         },
         body: JSON.stringify({ username, password, fullname, phone })
-    }).then(async res => ({ error: res.status >= 400 ? await res.text() : null }));
+    });
 
-    if (error) {
+    if (!response.ok) {
+        const errorText = await response.text();
         errorElem.style.color = "red";
-        errorElem.innerText = "Registration failed: " + error;
+        errorElem.innerText = "Registration failed: " + errorText;
         return;
     }
 
@@ -85,6 +110,44 @@ function logout() {
 }
 
 // ----------- Assignment Functions -----------
+// Populate system select
+function populateSystems() {
+    const systemSelect = document.getElementById('system-select');
+    if (systemSelect) {
+        systems.forEach(system => {
+            const opt = document.createElement('option');
+            opt.value = system.id;
+            opt.textContent = system.name;
+            systemSelect.appendChild(opt);
+        });
+    }
+}
+
+// Handle system selection
+document.addEventListener('DOMContentLoaded', function() {
+    const systemSelect = document.getElementById('system-select');
+    if (systemSelect) {
+        systemSelect.addEventListener('change', function() {
+            const systemId = this.value;
+            const subsystemSelect = document.getElementById('subsystem-select');
+            subsystemSelect.innerHTML = '<option value="">Select Subsystem</option>';
+            if (systemId) {
+                const system = systems.find(s => s.id == systemId);
+                system.subsystems.forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub;
+                    opt.textContent = sub;
+                    subsystemSelect.appendChild(opt);
+                });
+                subsystemSelect.style.display = '';
+                document.getElementById('submit-btn').style.display = '';
+            } else {
+                subsystemSelect.style.display = 'none';
+                document.getElementById('submit-btn').style.display = 'none';
+            }
+        });
+    }
+});
 
 // Assign user to system/subsystem
 async function submitAssignment() {
@@ -104,6 +167,13 @@ async function submitAssignment() {
     const users = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&select=*`, {
         headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
     }).then(res => res.json());
+    
+    if (!users.length) {
+        msg.style.color = "#c0392b";
+        msg.innerText = "User not found!";
+        return;
+    }
+    
     const user = users[0];
 
     // Remove previous assignments for this user
@@ -116,7 +186,7 @@ async function submitAssignment() {
     });
 
     // Add new assignment
-    const { error } = await fetch(`${SUPABASE_URL}/rest/v1/assignments`, {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/assignments`, {
         method: "POST",
         headers: {
             apikey: SUPABASE_APIKEY,
@@ -131,11 +201,12 @@ async function submitAssignment() {
             fullname: user.fullname,
             phone: user.phone
         })
-    }).then(async res => ({ error: res.status >= 400 ? await res.text() : null }));
+    });
 
-    if (error) {
+    if (!response.ok) {
+        const errorText = await response.text();
         msg.style.color = "#c0392b";
-        msg.innerText = "Assignment failed: " + error;
+        msg.innerText = "Assignment failed: " + errorText;
         return;
     }
 
@@ -168,32 +239,44 @@ async function leaveAssignment(systemId, subsystem, username) {
 // Display the user's current assignment and show "Leave" button
 async function showAssignmentInfo() {
     const username = localStorage.getItem('username');
+    if (!username) return;
+    
     const assignments = await fetch(`${SUPABASE_URL}/rest/v1/assignments?username=eq.${encodeURIComponent(username)}&select=*`, {
         headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
     }).then(res => res.json());
 
     let assigned = false;
     let assignedSystem = '', assignedSubsystem = '', assignedSystemId = '';
+    
     if (assignments.length) {
         assigned = true;
         assignedSystemId = assignments[0].system_id;
-        assignedSystem = typeof systems !== "undefined" && systems.find(s => s.id == assignedSystemId) ? systems.find(s => s.id == assignedSystemId).name : assignedSystemId;
+        assignedSystem = typeof systems !== "undefined" && systems.find(s => s.id == assignedSystemId) 
+            ? systems.find(s => s.id == assignedSystemId).name 
+            : assignedSystemId;
         assignedSubsystem = assignments[0].subsystem;
     }
+    
     const assignmentDiv = document.getElementById('assignment-info');
+    if (!assignmentDiv) return;
+    
     if (assigned) {
-        if (document.getElementById('form-section')) document.getElementById('form-section').style.display = 'none';
+        if (document.getElementById('form-section')) {
+            document.getElementById('form-section').style.display = 'none';
+        }
         assignmentDiv.innerHTML = `
             <b>You are assigned to:</b><br>
             System: <b>${assignedSystem}</b><br>
             Subsystem: <b>${assignedSubsystem}</b><br>
-            <button id="leave-btn">Leave</button>
+            <button id="leave-btn" class="btn">Leave</button>
         `;
         document.getElementById('leave-btn').onclick = function() {
             leaveAssignment(assignedSystemId, assignedSubsystem, username);
         };
     } else {
-        if (document.getElementById('form-section')) document.getElementById('form-section').style.display = '';
+        if (document.getElementById('form-section')) {
+            document.getElementById('form-section').style.display = '';
+        }
         assignmentDiv.innerHTML = '';
     }
 }
@@ -202,29 +285,42 @@ async function showAssignmentInfo() {
 async function loadHome() {
     const loggedIn = localStorage.getItem('loggedIn');
     const username = localStorage.getItem('username');
+    
     if (!loggedIn || !username) {
-        window.location.href = 'login.html';
-    } else {
-        // Get user info from Supabase
-        const users = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&select=*`, {
-            headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
-        }).then(res => res.json());
-        const user = users[0];
-        const fullname = user.fullname || username;
-        const phone = user.phone || 'N/A';
-        if (document.getElementById('doctor-credentials')) {
-            document.getElementById('doctor-credentials').innerText =
-                `Logged in as: Dr. ${fullname} | Phone: ${phone}`;
+        if (window.location.pathname.includes('form.html')) {
+            window.location.href = 'login.html';
         }
+        return;
+    }
+    
+    // Get user info from Supabase
+    const users = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&select=*`, {
+        headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
+    }).then(res => res.json());
+    
+    if (!users.length) return;
+    
+    const user = users[0];
+    const fullname = user.fullname || username;
+    const phone = user.phone || 'N/A';
+    
+    if (document.getElementById('doctor-credentials')) {
+        document.getElementById('doctor-credentials').innerText = 
+            `Logged in as: Dr. ${fullname} | Phone: ${phone}`;
     }
 }
 
 // ----------- Greeting on Form Page -----------
 async function greetUser() {
     const username = localStorage.getItem('username');
+    if (!username) return;
+    
     const users = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&select=*`, {
         headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
     }).then(res => res.json());
+    
+    if (!users.length) return;
+    
     const user = users[0];
     if (user && document.getElementById('greeting')) {
         document.getElementById('greeting').innerHTML =
@@ -235,11 +331,36 @@ async function greetUser() {
 // ----------- Page Initialization -----------
 async function initFormPage() {
     await greetUser();
-    if (typeof populateSystems === "function") populateSystems();
+    populateSystems();
     await showAssignmentInfo();
 }
 
-// Call loadHome() on index.html
-if (document.getElementById('doctor-credentials')) {
-    loadHome();
+// ----------- Document Ready -----------
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize based on page
+    if (document.getElementById('doctor-credentials')) {
+        loadHome();
+    }
+    
+    if (document.getElementById('greeting') || document.getElementById('assignment-info')) {
+        initFormPage();
+    }
+    
+    // Update navigation based on login status
+    updateNavigation();
+});
+
+// ----------- Update Navigation -----------
+function updateNavigation() {
+    const loggedIn = localStorage.getItem('loggedIn');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    if (loggedIn) {
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'inline-block';
+    } else {
+        if (loginBtn) loginBtn.style.display = 'inline-block';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+    }
 }

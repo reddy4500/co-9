@@ -88,6 +88,8 @@
             }
         }
     </style>
+    <!-- Supabase JS client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
     <!-- Navbar -->
@@ -112,6 +114,43 @@
             <p class="register-link">Don't have an account? <a href="register.html">Register here</a></p>
         </div>
     </section>
-    <script src="script.js"></script>
+    <script>
+        // --- Supabase Initialization ---
+        const SUPABASE_URL = "https://kxzkuphsoihlzjwbhghl.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4emt1cGhzb2lobHpqd2JoZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3NjcyNTIsImV4cCI6MjA2MTM0MzI1Mn0.6Fa0GLY82aMO19boMFeAfWypeuMflxi90jpOq12s0K8";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorElem = document.getElementById('login-error');
+            errorElem.textContent = "";
+
+            if (!username || !password) {
+                errorElem.textContent = "Please enter both username and password.";
+                return;
+            }
+
+            // Query Supabase users table
+            const { data: users, error } = await supabase
+                .from('users')
+                .select('username,password')
+                .eq('username', username)
+                .limit(1);
+
+            if (error) {
+                errorElem.textContent = "Login failed. Please try again.";
+                return;
+            }
+
+            if (users && users.length > 0 && users[0].password === password) {
+                localStorage.setItem('loggedIn', 'true');
+                localStorage.setItem('username', username);
+                window.location.href = 'form.html';
+            } else {
+                errorElem.textContent = "Invalid username or password.";
+            }
+        }
+    </script>
 </body>
 </html>

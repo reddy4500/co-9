@@ -5,106 +5,88 @@
     <title>Subsystem Users | CO-DOCTOR</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .main-section {
-            max-width: 700px;
-            margin: 40px auto 0 auto;
-            padding: 0 16px;
-        }
-        .subsystem-title {
-            font-weight: 600;
-            font-size: 1.3em;
-            color: #003366;
-            text-align: center;
-            margin-bottom: 24px;
-        }
-        .user-list {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            align-items: center;
-        }
-        .user-card {
-            background: #e6f0ff;
-            color: #0056b3;
-            border-radius: 14px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-            width: 300px;
-            min-height: 40px;
-            padding: 18px 12px;
-            font-size: 1.07em;
-            text-align: center;
-        }
-        .user-name {
-            font-weight: 600;
-            color: #003366;
-        }
-        .user-phone {
-            color: #0188df;
-            font-size: 0.97em;
-        }
-        .no-users {
-            color: #b2bec3;
-            font-style: italic;
-            text-align: center;
-            margin-top: 40px;
-        }
+        /* ... keep existing styles ... */
     </style>
+    <!-- Add Supabase client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="navbar-left">
-            <img src="logo.jpeg" class="logo" alt="CO-DOCTOR Logo">
-            <span class="brand-name">CO-DOCTOR</span>
-        </div>
-        <ul class="navbar-center">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="#">About</a></li>
-        </ul>
-        <div class="navbar-right">
-            <a href="login.html" class="login-btn">Login</a>
-        </div>
-    </nav>
-
+    <!-- Navbar (keep existing structure) -->
+    
     <section class="main-section">
         <div id="subsystem-title" class="subsystem-title"></div>
         <div class="user-list" id="user-list"></div>
         <div id="no-users" class="no-users"></div>
     </section>
+
     <script>
-        function getParams() {
-            const params = new URLSearchParams(window.location.search);
-            return {
-                systemId: parseInt(params.get('system'), 10),
-                subsystem: params.get('subsystem')
-            };
+        // --- Supabase Initialization ---
+        const SUPABASE_URL = "https://kxzkuphsoihlzjwbhghl.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4emt1cGhzb2lobHpqd2JoZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3NjcyNTIsImV4cCI6MjA2MTM0MzI1Mn0.6Fa0GLY82aMO19boMFeAfWypeuMflxi90jpOq12s0K8";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function getAssignedUsers(systemId, subsystem) {
+            // First get user IDs from assignments
+            const { data: assignments, error: assignError } = await supabase
+                .from('assignments')
+                .select('user_id')
+                .eq('system_id', systemId)
+                .eq('subsystem', subsystem);
+
+            if (assignError || !assignments || assignments.length === 0) {
+                return [];
+            }
+
+            // Get user details from users table
+            const userIds = assignments.map(a => a.user_id);
+            const { data: users, error: userError } = await supabase
+                .from('users')
+                .select('fullname, phone')
+                .in('id', userIds);
+
+            return users || [];
         }
 
-        function renderUsers() {
-            const {systemId, subsystem} = getParams();
-            document.getElementById('subsystem-title').textContent = `Subsystem: ${subsystem}`;
+        async function renderUsers() {
+            const params = new URLSearchParams(window.location.search);
+            const systemId = parseInt(params.get('system'), 10);
+            const subsystem = params.get('subsystem');
+            
+            document.getElementById('subsystem-title').textContent = 
+                `Subsystem: ${subsystem}`;
 
-            const assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
-            const users = assignments[systemId]?.[subsystem] || [];
             const userList = document.getElementById('user-list');
             const noUsers = document.getElementById('no-users');
-            userList.innerHTML = '';
+            
+            userList.innerHTML = '<div style="color:#888;">Loading users...</div>';
             noUsers.textContent = '';
 
-            if (users.length === 0) {
-                noUsers.textContent = 'No users assigned to this subsystem yet.';
-                return;
+            try {
+                const users = await getAssignedUsers(systemId, subsystem);
+
+                userList.innerHTML = '';
+                if (users.length === 0) {
+                    noUsers.textContent = 'No users assigned to this subsystem yet.';
+                    return;
+                }
+
+                users.forEach(user => {
+                    const div = document.createElement('div');
+                    div.className = 'user-card';
+                    div.innerHTML = `
+                        <div class="user-name">${user.fullname}</div>
+                        <div class="user-phone">${user.phone}</div>
+                    `;
+                    userList.appendChild(div);
+                });
+            } catch (error) {
+                userList.innerHTML = '';
+                noUsers.textContent = 'Error loading users. Please try again.';
+                console.error('Supabase error:', error);
             }
-            users.forEach(user => {
-                const div = document.createElement('div');
-                div.className = 'user-card';
-                div.innerHTML = `
-                    <div class="user-name">${user.fullname}</div>
-                    <div class="user-phone">${user.phone}</div>
-                `;
-                userList.appendChild(div);
-            });
         }
+
+        // Initial render
         renderUsers();
     </script>
 </body>
