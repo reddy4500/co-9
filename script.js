@@ -1,32 +1,5 @@
-// ----------- Supabase Config -----------
-const SUPABASE_URL = "https://kxzkuphsoihlzjwbhghl.supabase.co";
-const SUPABASE_APIKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4emt1cGhzb2lobHpqd2JoZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3NjcyNTIsImV4cCI6MjA2MTM0MzI1Mn0.6Fa0GLY82aMO19boMFeAfWypeuMflxi90jpOq12s0K8";
-
-// Define systems and subsystems
-const systems = [
-    {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
-    {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
-    {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
-    {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
-    {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
-    {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
-    {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
-    {id: 8, name: "Casualty", subsystems: [
-        "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
-        "COTM (medical/surgical)",
-        "DSO (surgery)",
-        "Pulmo (casualty/other)",
-        "ENT",
-        "Ophthal",
-        "Psy"
-    ]},
-    {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
-    {id: 10, name: "OBG & Labour Room", subsystems: ["Labour Room (Morning/Night)", "Admissions", "HDU", "Labour Room Intern", "POW 1", "POW 2", "PHW", "OP"]},
-    {id: 11, name: "Anaesthesia", subsystems: ["SS H", "Old Building", "Full Duty"]}
-];
-
 // ----------- User Registration -----------
-async function register() {
+function register() {
     const fullname = document.getElementById('reg-fullname').value.trim();
     const phone = document.getElementById('reg-phone').value.trim();
     const username = document.getElementById('reg-username').value.trim();
@@ -38,43 +11,23 @@ async function register() {
         errorElem.innerText = "Please fill in all fields.";
         return;
     }
-
     if (!/^\d{10}$/.test(phone)) {
         errorElem.style.color = "red";
         errorElem.innerText = "Please enter a valid 10-digit phone number.";
         return;
     }
-
-    // Check if username exists
-    const exists = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}`, {
-        headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
-    }).then(res => res.json());
-
-    if (exists.length > 0) {
+    let users = JSON.parse(localStorage.getItem('users') || '{}');
+    if (users[username]) {
         errorElem.style.color = "red";
         errorElem.innerText = "Username already exists. Please choose another.";
         return;
     }
-
-    // Create new user
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-        method: "POST",
-        headers: {
-            apikey: SUPABASE_APIKEY,
-            Authorization: `Bearer ${SUPABASE_APIKEY}`,
-            "Content-Type": "application/json",
-            Prefer: "return=representation"
-        },
-        body: JSON.stringify({ username, password, fullname, phone })
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        errorElem.style.color = "red";
-        errorElem.innerText = "Registration failed: " + errorText;
-        return;
-    }
-
+    users[username] = {
+        password: password,
+        fullname: fullname,
+        phone: phone
+    };
+    localStorage.setItem('users', JSON.stringify(users));
     errorElem.style.color = "green";
     errorElem.innerText = "Registration successful! Redirecting to login...";
     setTimeout(() => {
@@ -83,16 +36,13 @@ async function register() {
 }
 
 // ----------- User Login -----------
-async function login() {
+function login() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
     const errorElem = document.getElementById('login-error');
 
-    const users = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&select=*`, {
-        headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
-    }).then(res => res.json());
-
-    if (users.length && users[0].password === password) {
+    let users = JSON.parse(localStorage.getItem('users') || '{}');
+    if (users[username] && users[username].password === password) {
         localStorage.setItem('loggedIn', 'true');
         localStorage.setItem('username', username);
         window.location.href = 'form.html';
@@ -110,47 +60,9 @@ function logout() {
 }
 
 // ----------- Assignment Functions -----------
-// Populate system select
-function populateSystems() {
-    const systemSelect = document.getElementById('system-select');
-    if (systemSelect) {
-        systems.forEach(system => {
-            const opt = document.createElement('option');
-            opt.value = system.id;
-            opt.textContent = system.name;
-            systemSelect.appendChild(opt);
-        });
-    }
-}
-
-// Handle system selection
-document.addEventListener('DOMContentLoaded', function() {
-    const systemSelect = document.getElementById('system-select');
-    if (systemSelect) {
-        systemSelect.addEventListener('change', function() {
-            const systemId = this.value;
-            const subsystemSelect = document.getElementById('subsystem-select');
-            subsystemSelect.innerHTML = '<option value="">Select Subsystem</option>';
-            if (systemId) {
-                const system = systems.find(s => s.id == systemId);
-                system.subsystems.forEach(sub => {
-                    const opt = document.createElement('option');
-                    opt.value = sub;
-                    opt.textContent = sub;
-                    subsystemSelect.appendChild(opt);
-                });
-                subsystemSelect.style.display = '';
-                document.getElementById('submit-btn').style.display = '';
-            } else {
-                subsystemSelect.style.display = 'none';
-                document.getElementById('submit-btn').style.display = 'none';
-            }
-        });
-    }
-});
 
 // Assign user to system/subsystem
-async function submitAssignment() {
+function submitAssignment() {
     const systemId = document.getElementById('system-select').value;
     const subsystem = document.getElementById('subsystem-select').value;
     const msg = document.getElementById('success-message');
@@ -163,70 +75,48 @@ async function submitAssignment() {
     }
 
     const username = localStorage.getItem('username');
-    // Get user info
-    const users = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&select=*`, {
-        headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
-    }).then(res => res.json());
-    
-    if (!users.length) {
-        msg.style.color = "#c0392b";
-        msg.innerText = "User not found!";
-        return;
-    }
-    
-    const user = users[0];
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    const user = users[username];
 
-    // Remove previous assignments for this user
-    await fetch(`${SUPABASE_URL}/rest/v1/assignments?username=eq.${encodeURIComponent(username)}`, {
-        method: "DELETE",
-        headers: {
-            apikey: SUPABASE_APIKEY,
-            Authorization: `Bearer ${SUPABASE_APIKEY}`
+    let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+
+    // Remove user from previous assignments
+    for (const sysId in assignments) {
+        for (const sub in assignments[sysId]) {
+            assignments[sysId][sub] = assignments[sysId][sub].filter(u => u.username !== username);
         }
-    });
-
-    // Add new assignment
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/assignments`, {
-        method: "POST",
-        headers: {
-            apikey: SUPABASE_APIKEY,
-            Authorization: `Bearer ${SUPABASE_APIKEY}`,
-            "Content-Type": "application/json",
-            Prefer: "return=representation"
-        },
-        body: JSON.stringify({
-            username,
-            system_id: systemId,
-            subsystem,
-            fullname: user.fullname,
-            phone: user.phone
-        })
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        msg.style.color = "#c0392b";
-        msg.innerText = "Assignment failed: " + errorText;
-        return;
     }
 
-    msg.style.color = "#27ae60";
-    msg.innerText = "Assignment successful!";
-    setTimeout(() => {
-        msg.innerText = "";
-        showAssignmentInfo();
-    }, 700);
+    if (!assignments[systemId]) assignments[systemId] = {};
+    if (!assignments[systemId][subsystem]) assignments[systemId][subsystem] = [];
+
+    // Prevent duplicate assignment
+    if (!assignments[systemId][subsystem].some(u => u.username === username)) {
+        assignments[systemId][subsystem].push({
+            fullname: user.fullname,
+            phone: user.phone,
+            username: username
+        });
+        localStorage.setItem('assignments', JSON.stringify(assignments));
+        msg.style.color = "#27ae60";
+        msg.innerText = "Assignment successful!";
+        setTimeout(() => {
+            msg.innerText = "";
+            showAssignmentInfo();
+        }, 700);
+    } else {
+        msg.style.color = "#c0392b";
+        msg.innerText = "You are already assigned to this subsystem.";
+    }
 }
 
 // Remove user from their assignment
-async function leaveAssignment(systemId, subsystem, username) {
-    await fetch(`${SUPABASE_URL}/rest/v1/assignments?username=eq.${encodeURIComponent(username)}&system_id=eq.${systemId}&subsystem=eq.${encodeURIComponent(subsystem)}`, {
-        method: "DELETE",
-        headers: {
-            apikey: SUPABASE_APIKEY,
-            Authorization: `Bearer ${SUPABASE_APIKEY}`
-        }
-    });
+function leaveAssignment(systemId, subsystem, username) {
+    let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+    if (assignments[systemId] && assignments[systemId][subsystem]) {
+        assignments[systemId][subsystem] = assignments[systemId][subsystem].filter(u => u.username !== username);
+        localStorage.setItem('assignments', JSON.stringify(assignments));
+    }
     const msg = document.getElementById('success-message');
     msg.style.color = "#c0392b";
     msg.innerText = "You have left the subsystem.";
@@ -237,91 +127,65 @@ async function leaveAssignment(systemId, subsystem, username) {
 }
 
 // Display the user's current assignment and show "Leave" button
-async function showAssignmentInfo() {
+function showAssignmentInfo() {
     const username = localStorage.getItem('username');
-    if (!username) return;
-    
-    const assignments = await fetch(`${SUPABASE_URL}/rest/v1/assignments?username=eq.${encodeURIComponent(username)}&select=*`, {
-        headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
-    }).then(res => res.json());
-
+    let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
     let assigned = false;
     let assignedSystem = '', assignedSubsystem = '', assignedSystemId = '';
-    
-    if (assignments.length) {
-        assigned = true;
-        assignedSystemId = assignments[0].system_id;
-        assignedSystem = typeof systems !== "undefined" && systems.find(s => s.id == assignedSystemId) 
-            ? systems.find(s => s.id == assignedSystemId).name 
-            : assignedSystemId;
-        assignedSubsystem = assignments[0].subsystem;
-    }
-    
-    const assignmentDiv = document.getElementById('assignment-info');
-    if (!assignmentDiv) return;
-    
-    if (assigned) {
-        if (document.getElementById('form-section')) {
-            document.getElementById('form-section').style.display = 'none';
+    // You should have a `systems` array defined globally on the form.html page
+    for (const sysId in assignments) {
+        for (const sub in assignments[sysId]) {
+            if (assignments[sysId][sub].some(u => u.username === username)) {
+                assigned = true;
+                assignedSystemId = sysId;
+                assignedSystem = typeof systems !== "undefined" && systems.find(s => s.id == sysId) ? systems.find(s => s.id == sysId).name : sysId;
+                assignedSubsystem = sub;
+                break;
+            }
         }
+        if (assigned) break;
+    }
+    const assignmentDiv = document.getElementById('assignment-info');
+    if (assigned) {
+        if (document.getElementById('form-section')) document.getElementById('form-section').style.display = 'none';
         assignmentDiv.innerHTML = `
             <b>You are assigned to:</b><br>
             System: <b>${assignedSystem}</b><br>
             Subsystem: <b>${assignedSubsystem}</b><br>
-            <button id="leave-btn" class="btn">Leave</button>
+            <button id="leave-btn">Leave</button>
         `;
         document.getElementById('leave-btn').onclick = function() {
             leaveAssignment(assignedSystemId, assignedSubsystem, username);
         };
     } else {
-        if (document.getElementById('form-section')) {
-            document.getElementById('form-section').style.display = '';
-        }
+        if (document.getElementById('form-section')) document.getElementById('form-section').style.display = '';
         assignmentDiv.innerHTML = '';
     }
 }
 
 // ----------- Home Page Credential Display -----------
-async function loadHome() {
+function loadHome() {
     const loggedIn = localStorage.getItem('loggedIn');
     const username = localStorage.getItem('username');
-    
-    if (!loggedIn || !username) {
-        if (window.location.pathname.includes('form.html')) {
-            window.location.href = 'login.html';
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    const user = users[username];
+    if (!loggedIn || !user) {
+        window.location.href = 'login.html';
+    } else {
+        const fullname = user.fullname || username;
+        const phone = user.phone || 'N/A';
+        if (document.getElementById('doctor-credentials')) {
+            document.getElementById('doctor-credentials').innerText =
+                `Logged in as: Dr. ${fullname} | Phone: ${phone}`;
         }
-        return;
-    }
-    
-    // Get user info from Supabase
-    const users = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&select=*`, {
-        headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
-    }).then(res => res.json());
-    
-    if (!users.length) return;
-    
-    const user = users[0];
-    const fullname = user.fullname || username;
-    const phone = user.phone || 'N/A';
-    
-    if (document.getElementById('doctor-credentials')) {
-        document.getElementById('doctor-credentials').innerText = 
-            `Logged in as: Dr. ${fullname} | Phone: ${phone}`;
     }
 }
 
 // ----------- Greeting on Form Page -----------
-async function greetUser() {
+function greetUser() {
     const username = localStorage.getItem('username');
-    if (!username) return;
-    
-    const users = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&select=*`, {
-        headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
-    }).then(res => res.json());
-    
-    if (!users.length) return;
-    
-    const user = users[0];
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    const user = users[username];
     if (user && document.getElementById('greeting')) {
         document.getElementById('greeting').innerHTML =
             `Welcome, <b>${user.fullname}</b><br>Phone: <b>${user.phone}</b>`;
@@ -329,38 +193,14 @@ async function greetUser() {
 }
 
 // ----------- Page Initialization -----------
-async function initFormPage() {
-    await greetUser();
-    populateSystems();
-    await showAssignmentInfo();
+// Call this on form.html page load
+function initFormPage() {
+    greetUser();
+    if (typeof populateSystems === "function") populateSystems();
+    showAssignmentInfo();
 }
 
-// ----------- Document Ready -----------
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize based on page
-    if (document.getElementById('doctor-credentials')) {
-        loadHome();
-    }
-    
-    if (document.getElementById('greeting') || document.getElementById('assignment-info')) {
-        initFormPage();
-    }
-    
-    // Update navigation based on login status
-    updateNavigation();
-});
-
-// ----------- Update Navigation -----------
-function updateNavigation() {
-    const loggedIn = localStorage.getItem('loggedIn');
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    
-    if (loggedIn) {
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'inline-block';
-    } else {
-        if (loginBtn) loginBtn.style.display = 'inline-block';
-        if (logoutBtn) logoutBtn.style.display = 'none';
-    }
+// Call loadHome() on index.html
+if (document.getElementById('doctor-credentials')) {
+    loadHome();
 }

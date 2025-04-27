@@ -6,7 +6,84 @@
     <title>Select System & Subsystem | CO-DOCTOR</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ... your existing CSS ... */
+        body {
+            min-height: 100vh;
+            background: #f5f8fa;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .form-container {
+            background: #fff;
+            padding: 40px 32px 32px 32px;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+            min-width: 320px;
+            margin: 60px auto 0 auto;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 {
+            color: #003366;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+        .greeting {
+            color: #0188df;
+            margin-bottom: 22px;
+            font-size: 1.07em;
+            text-align: center;
+        }
+        select, .btn {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            border: 1px solid #b0c4de;
+            border-radius: 7px;
+            font-size: 1em;
+            outline: none;
+            transition: border 0.2s;
+        }
+        select:focus {
+            border: 1.5px solid #0188df;
+        }
+        .btn {
+            background: #0188df;
+            color: #fff;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 0;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        #leave-btn {
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            padding: 10px 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        #leave-btn:hover {
+            background: #c0392b;
+        }
+        #assignment-info {
+            margin-top: 24px;
+            text-align: center;
+        }
+        #success-message {
+            color: #27ae60;
+            margin-top: 10px;
+            font-size: 1em;
+            min-height: 22px;
+        }
     </style>
 </head>
 <body>
@@ -43,222 +120,198 @@
         </div>
     </section>
     <script>
-    // -------- Supabase Config --------
-    const SUPABASE_URL = "https://kxzkuphsoihlzjwbhghl.supabase.co";
-    const SUPABASE_APIKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4emt1cGhzb2lobHpqd2JoZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3NjcyNTIsImV4cCI6MjA2MTM0MzI1Mn0.6Fa0GLY82aMO19boMFeAfWypeuMflxi90jpOq12s0K8";
-
-    // -------- System Data --------
-    const systems = [
-        {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
-        {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
-        {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
-        {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
-        {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
-        {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
-        {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
-        {id: 8, name: "Casualty", subsystems: [
-            "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
-            "COTM (medical/surgical)",
-            "DSO (surgery)",
-            "Pulmo (casualty/other)",
-            "ENT",
-            "Ophthal",
-            "Psy"
-        ]},
-        {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
-        {id: 10, name: "OBG & Labour Room", subsystems: [
-            "Labour Room (Morning/Night)",
-            "Admissions",
-            "HDU",
-            "Labour Room Intern",
-            "POW 1",
-            "POW 2",
-            "PHW",
-            "OP"
-        ]},
-        {id: 11, name: "Anaesthesia", subsystems: [
-            "SS H",
-            "Old Building",
-            "Full Duty"
-        ]}
-    ];
-
-    // -------- Utility --------
-    function getUsername() {
-        return localStorage.getItem('username');
-    }
-    function checkLogin() {
-        if (!localStorage.getItem('loggedIn') || !getUsername()) {
+        // Redirect to login if not signed in
+        if (!localStorage.getItem('loggedIn') || !localStorage.getItem('username')) {
             window.location.href = 'login.html';
         }
-    }
-    checkLogin();
 
-    // -------- Greet User --------
-    async function greetUser() {
-        const username = getUsername();
-        if (!username) return;
-        const users = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&select=*`, {
-            headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
-        }).then(res => res.json());
-        const user = users[0];
-        if (user && document.getElementById('greeting')) {
-            document.getElementById('greeting').innerHTML =
-                `Welcome, <b>${user.fullname}</b><br>Phone: <b>${user.phone}</b>`;
+        // Define systems and subsystems
+        const systems = [
+            {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
+            {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
+            {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
+            {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
+            {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
+            {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
+            {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
+            {id: 8, name: "Casualty", subsystems: [
+                "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
+                "COTM (medical/surgical)",
+                "DSO (surgery)",
+                "Pulmo (casualty/other)",
+                "ENT",
+                "Ophthal",
+                "Psy"
+            ]},
+            {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
+            {id: 10, name: "OBG & Labour Room", subsystems: [
+                "Labour Room (Morning/Night)",
+                "Admissions",
+                "HDU",
+                "Labour Room Intern",
+                "POW 1",
+                "POW 2",
+                "PHW",
+                "OP"
+            ]},
+            {id: 11, name: "Anaesthesia", subsystems: [
+                "SS H",
+                "Old Building",
+                "Full Duty"
+            ]}
+        ];
+
+        // Greet user
+        function greetUser() {
+            const username = localStorage.getItem('username');
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const user = users[username];
+            if (user) {
+                document.getElementById('greeting').innerHTML =
+                    `Welcome, <b>${user.fullname}</b><br>Phone: <b>${user.phone}</b>`;
+            } else {
+                document.getElementById('greeting').innerHTML = "";
+            }
         }
-    }
 
-    // -------- Populate Systems --------
-    function populateSystems() {
-        const systemSelect = document.getElementById('system-select');
-        systems.forEach(system => {
-            const opt = document.createElement('option');
-            opt.value = system.id;
-            opt.textContent = system.name;
-            systemSelect.appendChild(opt);
-        });
-    }
-
-    document.getElementById('system-select').addEventListener('change', function() {
-        const systemId = this.value;
-        const subsystemSelect = document.getElementById('subsystem-select');
-        subsystemSelect.innerHTML = '<option value="">Select Subsystem</option>';
-        if (systemId) {
-            const system = systems.find(s => s.id == systemId);
-            system.subsystems.forEach(sub => {
+        // Populate system select
+        function populateSystems() {
+            const systemSelect = document.getElementById('system-select');
+            systems.forEach(system => {
                 const opt = document.createElement('option');
-                opt.value = sub;
-                opt.textContent = sub;
-                subsystemSelect.appendChild(opt);
+                opt.value = system.id;
+                opt.textContent = system.name;
+                systemSelect.appendChild(opt);
             });
-            subsystemSelect.style.display = '';
-            document.getElementById('submit-btn').style.display = '';
-        } else {
-            subsystemSelect.style.display = 'none';
-            document.getElementById('submit-btn').style.display = 'none';
-        }
-    });
-
-    // -------- Assignment Logic (Supabase) --------
-    async function showAssignmentInfo() {
-        const username = getUsername();
-        const assignments = await fetch(`${SUPABASE_URL}/rest/v1/assignments?username=eq.${encodeURIComponent(username)}&select=*`, {
-            headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
-        }).then(res => res.json());
-
-        let assigned = false, assignedSystem = '', assignedSubsystem = '', assignedSystemId = '';
-        if (assignments.length) {
-            assigned = true;
-            assignedSystemId = assignments[0].system_id;
-            assignedSystem = systems.find(s => s.id == assignedSystemId)?.name || assignedSystemId;
-            assignedSubsystem = assignments[0].subsystem;
-        }
-        const assignmentDiv = document.getElementById('assignment-info');
-        if (assigned) {
-            document.getElementById('form-section').style.display = 'none';
-            assignmentDiv.innerHTML = `
-                <b>You are assigned to:</b><br>
-                System: <b>${assignedSystem}</b><br>
-                Subsystem: <b>${assignedSubsystem}</b><br>
-                <button id="leave-btn">Leave</button>
-            `;
-            document.getElementById('leave-btn').onclick = function() {
-                leaveAssignment(assignedSystemId, assignedSubsystem, username);
-            };
-        } else {
-            document.getElementById('form-section').style.display = '';
-            assignmentDiv.innerHTML = '';
-        }
-    }
-
-    async function submitAssignment() {
-        const systemId = document.getElementById('system-select').value;
-        const subsystem = document.getElementById('subsystem-select').value;
-        const msg = document.getElementById('success-message');
-        msg.textContent = "";
-
-        if (!systemId || !subsystem) {
-            msg.style.color = "#c0392b";
-            msg.textContent = "Please select both system and subsystem.";
-            return;
         }
 
-        const username = getUsername();
-        // Get user info
-        const users = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&select=*`, {
-            headers: { apikey: SUPABASE_APIKEY, Authorization: `Bearer ${SUPABASE_APIKEY}` }
-        }).then(res => res.json());
-        const user = users[0];
-
-        // Remove previous assignments for this user
-        await fetch(`${SUPABASE_URL}/rest/v1/assignments?username=eq.${encodeURIComponent(username)}`, {
-            method: "DELETE",
-            headers: {
-                apikey: SUPABASE_APIKEY,
-                Authorization: `Bearer ${SUPABASE_APIKEY}`
+        // Populate subsystems on system select
+        document.getElementById('system-select').addEventListener('change', function() {
+            const systemId = this.value;
+            const subsystemSelect = document.getElementById('subsystem-select');
+            subsystemSelect.innerHTML = '<option value="">Select Subsystem</option>';
+            if (systemId) {
+                const system = systems.find(s => s.id == systemId);
+                system.subsystems.forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub;
+                    opt.textContent = sub;
+                    subsystemSelect.appendChild(opt);
+                });
+                subsystemSelect.style.display = '';
+                document.getElementById('submit-btn').style.display = '';
+            } else {
+                subsystemSelect.style.display = 'none';
+                document.getElementById('submit-btn').style.display = 'none';
             }
         });
 
-        // Add new assignment
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/assignments`, {
-            method: "POST",
-            headers: {
-                apikey: SUPABASE_APIKEY,
-                Authorization: `Bearer ${SUPABASE_APIKEY}`,
-                "Content-Type": "application/json",
-                Prefer: "return=representation"
-            },
-            body: JSON.stringify({
-                username,
-                system_id: systemId,
-                subsystem,
+        // Show assignment info and leave button if already assigned
+        function showAssignmentInfo() {
+            const username = localStorage.getItem('username');
+            let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+            let assigned = false;
+            let assignedSystem = '', assignedSubsystem = '', assignedSystemId = '';
+            for (const sysId in assignments) {
+                for (const sub in assignments[sysId]) {
+                    if (assignments[sysId][sub].some(u => u.username === username)) {
+                        assigned = true;
+                        assignedSystemId = sysId;
+                        assignedSystem = systems.find(s => s.id == sysId).name;
+                        assignedSubsystem = sub;
+                        break;
+                    }
+                }
+                if (assigned) break;
+            }
+            const assignmentDiv = document.getElementById('assignment-info');
+            if (assigned) {
+                document.getElementById('form-section').style.display = 'none';
+                assignmentDiv.innerHTML = `
+                    <b>You are assigned to:</b><br>
+                    System: <b>${assignedSystem}</b><br>
+                    Subsystem: <b>${assignedSubsystem}</b><br>
+                    <button id="leave-btn">Leave</button>
+                `;
+                document.getElementById('leave-btn').onclick = function() {
+                    leaveAssignment(assignedSystemId, assignedSubsystem, username);
+                };
+            } else {
+                document.getElementById('form-section').style.display = '';
+                assignmentDiv.innerHTML = '';
+            }
+        }
+
+        // Handle submit
+        function submitAssignment() {
+            const systemId = document.getElementById('system-select').value;
+            const subsystem = document.getElementById('subsystem-select').value;
+            const msg = document.getElementById('success-message');
+            msg.textContent = "";
+
+            if (!systemId || !subsystem) {
+                msg.style.color = "#c0392b";
+                msg.textContent = "Please select both system and subsystem.";
+                return;
+            }
+
+            // Get user info
+            const username = localStorage.getItem('username');
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const user = users[username];
+
+            // Get existing assignments
+            let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+            // Remove user from any previous assignment
+            for (const sysId in assignments) {
+                for (const sub in assignments[sysId]) {
+                    assignments[sysId][sub] = assignments[sysId][sub].filter(u => u.username !== username);
+                }
+            }
+            if (!assignments[systemId]) assignments[systemId] = {};
+            if (!assignments[systemId][subsystem]) assignments[systemId][subsystem] = [];
+
+            // Assign user
+            assignments[systemId][subsystem].push({
                 fullname: user.fullname,
-                phone: user.phone
-            })
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            msg.style.color = "#c0392b";
-            msg.textContent = "Assignment failed: " + errorText;
-            return;
+                phone: user.phone,
+                username: username
+            });
+            localStorage.setItem('assignments', JSON.stringify(assignments));
+            msg.style.color = "#27ae60";
+            msg.textContent = "Assignment successful!";
+            setTimeout(() => {
+                msg.textContent = "";
+                showAssignmentInfo();
+            }, 800);
         }
 
-        msg.style.color = "#27ae60";
-        msg.textContent = "Assignment successful!";
-        setTimeout(() => {
-            msg.textContent = "";
-            showAssignmentInfo();
-        }, 800);
-    }
-
-    async function leaveAssignment(systemId, subsystem, username) {
-        await fetch(`${SUPABASE_URL}/rest/v1/assignments?username=eq.${encodeURIComponent(username)}&system_id=eq.${systemId}&subsystem=eq.${encodeURIComponent(subsystem)}`, {
-            method: "DELETE",
-            headers: {
-                apikey: SUPABASE_APIKEY,
-                Authorization: `Bearer ${SUPABASE_APIKEY}`
+        // Leave assignment
+        function leaveAssignment(systemId, subsystem, username) {
+            let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+            if (assignments[systemId] && assignments[systemId][subsystem]) {
+                assignments[systemId][subsystem] = assignments[systemId][subsystem].filter(u => u.username !== username);
+                localStorage.setItem('assignments', JSON.stringify(assignments));
             }
-        });
-        const msg = document.getElementById('success-message');
-        msg.style.color = "#c0392b";
-        msg.textContent = "You have left the subsystem.";
-        setTimeout(() => {
-            msg.textContent = "";
-            showAssignmentInfo();
-        }, 1000);
-    }
+            document.getElementById('success-message').style.color = "#c0392b";
+            document.getElementById('success-message').textContent = "You have left the subsystem.";
+            setTimeout(() => {
+                document.getElementById('success-message').textContent = "";
+                showAssignmentInfo();
+            }, 1000);
+        }
 
-    function logout() {
-        localStorage.removeItem('loggedIn');
-        localStorage.removeItem('username');
-        window.location.href = 'login.html';
-    }
+        // Logout function
+        function logout() {
+            localStorage.removeItem('loggedIn');
+            localStorage.removeItem('username');
+            window.location.href = 'login.html';
+        }
 
-    // -------- On page load --------
-    greetUser();
-    populateSystems();
-    showAssignmentInfo();
+        // On page load
+        greetUser();
+        populateSystems();
+        showAssignmentInfo();
     </script>
 </body>
 </html>

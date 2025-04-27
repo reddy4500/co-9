@@ -102,23 +102,14 @@
             padding: 24px 28px 18px 28px;
             font-size: 1.18em;
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            text-align: left;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
         .system-box:hover {
             background: #0056b3;
             transform: translateY(-4px) scale(1.03);
             box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-        }
-        .subsystem-list {
-            margin: 12px 0 0 10px;
-            padding-left: 14px;
-            font-size: 0.98em;
-            color: #e0f7fa;
-        }
-        .subsystem-list li {
-            margin-bottom: 2px;
         }
         @media (max-width: 700px) {
             .system-box {
@@ -129,7 +120,6 @@
             }
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
     <!-- Navbar -->
@@ -156,70 +146,50 @@
     </section>
 
     <script>
-        // --- Supabase Initialization ---
-        const SUPABASE_URL = "https://kxzkuphsoihlzjwbhghl.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4emt1cGhzb2lobHpqd2JoZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3NjcyNTIsImV4cCI6MjA2MTM0MzI1Mn0.6Fa0GLY82aMO19boMFeAfWypeuMflxi90jpOq12s0K8";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // --- SYSTEMS DATA ---
+        const systems = [
+            {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
+            {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
+            {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
+            {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
+            {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
+            {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
+            {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
+            {id: 8, name: "Casualty", subsystems: [
+                "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
+                "COTM (medical/surgical)",
+                "DSO (surgery)",
+                "Pulmo (casualty/other)",
+                "ENT",
+                "Ophthal",
+                "Psy"
+            ]},
+            {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
+            {id: 10, name: "OBG & Labour Room", subsystems: [
+                "Labour Room (Morning/Night)",
+                "Admissions",
+                "HDU",
+                "Labour Room Intern",
+                "POW 1",
+                "POW 2",
+                "PHW",
+                "OP"
+            ]},
+            {id: 11, name: "Anaesthesia", subsystems: [
+                "SS H",
+                "Old Building",
+                "Full Duty"
+            ]}
+        ];
 
-        // --- RENDER SYSTEMS AND SUBSYSTEMS FROM SUPABASE ---
-        async function renderSystems() {
+        // --- RENDER SYSTEMS ---
+        function renderSystems() {
             const grid = document.getElementById('system-grid');
-            grid.innerHTML = '<div style="color:#888;">Loading systems...</div>';
-
-            // Try to fetch systems and their subsystems from Supabase using nested select
-            let { data: systems, error } = await supabase
-                .from('systems')
-                .select('id, name, subsystems ( id, name )')
-                .order('id', { ascending: true });
-
-            // If error or no table, fallback to static
-            if (error || !systems || systems.length === 0) {
-                systems = [
-                    {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: [{name:"RICU"}, {name:"TB and exam ward"}, {name:"OP"}, {name:"Casualty"}]},
-                    {id: 2, name: "Pediatrics", subsystems: [{name:"Wards"}, {name:"PICU"}, {name:"OP"}]},
-                    {id: 3, name: "General Surgery", subsystems: [{name:"OP"}, {name:"Wards"}]},
-                    {id: 4, name: "Radiology", subsystems: [{name:"Morning"}, {name:"Afternoon"}, {name:"Night"}]},
-                    {id: 5, name: "ENT", subsystems: [{name:"Casualty"}, {name:"Ward"}]},
-                    {id: 6, name: "Orthopedics", subsystems: [{name:"OP"}, {name:"Ward/Casualty"}, {name:"OT"}, {name:"Casualty"}]},
-                    {id: 7, name: "SPM (Community Medicine)", subsystems: [{name:"Gudihattham"}, {name:"Khurikidivagas"}, {name:"Psychiatry"}, {name:"CS"}, {name:"DTC"}, {name:"SUC"}, {name:"Department"}]},
-                    {id: 8, name: "Casualty", subsystems: [
-                        {name:"CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)"},
-                        {name:"COTM (medical/surgical)"},
-                        {name:"DSO (surgery)"},
-                        {name:"Pulmo (casualty/other)"},
-                        {name:"ENT"},
-                        {name:"Ophthal"},
-                        {name:"Psy"}
-                    ]},
-                    {id: 9, name: "Medicine", subsystems: [{name:"MICU"}, {name:"COTM"}, {name:"BCCO"}, {name:"MMW"}, {name:"FMW"}, {name:"OP"}]},
-                    {id: 10, name: "OBG & Labour Room", subsystems: [
-                        {name:"Labour Room (Morning/Night)"},
-                        {name:"Admissions"},
-                        {name:"HDU"},
-                        {name:"Labour Room Intern"},
-                        {name:"POW 1"},
-                        {name:"POW 2"},
-                        {name:"PHW"},
-                        {name:"OP"}
-                    ]},
-                    {id: 11, name: "Anaesthesia", subsystems: [
-                        {name:"SS H"},
-                        {name:"Old Building"},
-                        {name:"Full Duty"}
-                    ]}
-                ];
-            }
-
             grid.innerHTML = '';
             systems.forEach(system => {
                 const box = document.createElement('div');
                 box.className = 'system-box';
-                box.innerHTML = `<b>${system.id}. ${system.name}</b>`;
-                if (system.subsystems && system.subsystems.length) {
-                    box.innerHTML += `<ul class="subsystem-list">` +
-                        system.subsystems.map(sub => `<li>${sub.name}</li>`).join('') +
-                        `</ul>`;
-                }
+                box.textContent = `${system.id}. ${system.name}`;
                 box.onclick = () => {
                     window.location.href = `system.html?system=${system.id}`;
                 };
@@ -227,30 +197,20 @@
             });
         }
 
-        // --- SHOW DOCTOR CREDENTIALS & BUTTONS FROM SUPABASE ---
-        async function showDoctorCredentials() {
+        // --- SHOW DOCTOR CREDENTIALS & BUTTONS ---
+        function showDoctorCredentials() {
             const loggedIn = localStorage.getItem('loggedIn');
             const username = localStorage.getItem('username');
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const user = users[username];
             const credElem = document.getElementById('doctor-credentials');
             const loginBtn = document.getElementById('login-btn');
             const logoutBtn = document.getElementById('logout-btn');
 
-            if (loggedIn && username) {
-                // Fetch user from Supabase
-                const { data: users } = await supabase
-                    .from('users')
-                    .select('fullname,phone')
-                    .eq('username', username)
-                    .limit(1);
-                if (users && users.length > 0) {
-                    credElem.innerHTML = `Dr. <b>${users[0].fullname}</b> | <span style="color:#fff;">${users[0].phone}</span>`;
-                    loginBtn.style.display = 'none';
-                    logoutBtn.style.display = '';
-                } else {
-                    credElem.innerHTML = '';
-                    loginBtn.style.display = '';
-                    logoutBtn.style.display = 'none';
-                }
+            if (loggedIn && user) {
+                credElem.innerHTML = `Dr. <b>${user.fullname}</b> | <span style="color:#fff;">${user.phone}</span>`;
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = '';
             } else {
                 credElem.innerHTML = '';
                 loginBtn.style.display = '';
@@ -258,11 +218,18 @@
             }
         }
 
+        // --- LOGOUT FUNCTION ---
         function logout() {
             localStorage.removeItem('loggedIn');
             localStorage.removeItem('username');
             window.location.href = 'login.html';
         }
+
+        // --- OPTIONAL: REDIRECT TO LOGIN IF NOT SIGNED IN ---
+        // Uncomment below if you want to restrict index.html to logged-in users only
+        // if (!localStorage.getItem('loggedIn') || !localStorage.getItem('username')) {
+        //     window.location.href = 'login.html';
+        // }
 
         // --- INIT ---
         renderSystems();
