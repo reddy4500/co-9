@@ -60,6 +60,24 @@
         .btn:hover {
             background: #0056b3;
         }
+        #leave-btn {
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            padding: 10px 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        #leave-btn:hover {
+            background: #c0392b;
+        }
+        #assignment-info {
+            margin-top: 24px;
+            text-align: center;
+        }
         #success-message {
             color: #27ae60;
             margin-top: 10px;
@@ -80,7 +98,7 @@
             <li><a href="#">About</a></li>
         </ul>
         <div class="navbar-right">
-            <a href="logout.html" class="login-btn">Logout</a>
+            <a href="#" onclick="logout()" class="login-btn">Logout</a>
         </div>
     </nav>
 
@@ -88,17 +106,25 @@
         <div class="form-container">
             <h2>Choose Your System</h2>
             <div class="greeting" id="greeting"></div>
-            <select id="system-select">
-                <option value="">Select System</option>
-            </select>
-            <select id="subsystem-select" style="display:none;">
-                <option value="">Select Subsystem</option>
-            </select>
-            <button onclick="submitAssignment()" class="btn" id="submit-btn" style="display:none;">Submit</button>
+            <div id="form-section">
+                <select id="system-select">
+                    <option value="">Select System</option>
+                </select>
+                <select id="subsystem-select" style="display:none;">
+                    <option value="">Select Subsystem</option>
+                </select>
+                <button onclick="submitAssignment()" class="btn" id="submit-btn" style="display:none;">Submit</button>
+            </div>
+            <div id="assignment-info"></div>
             <div id="success-message"></div>
         </div>
     </section>
     <script>
+        // Redirect to login if not signed in
+        if (!localStorage.getItem('loggedIn') || !localStorage.getItem('username')) {
+            window.location.href = 'login.html';
+        }
+
         // Define systems and subsystems
         const systems = [
             {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
@@ -180,6 +206,42 @@
             }
         });
 
+        // Show assignment info and leave button if already assigned
+        function showAssignmentInfo() {
+            const username = localStorage.getItem('username');
+            let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+            let assigned = false;
+            let assignedSystem = '', assignedSubsystem = '', assignedSystemId = '';
+            for (const sysId in assignments) {
+                for (const sub in assignments[sysId]) {
+                    if (assignments[sysId][sub].some(u => u.username === username)) {
+                        assigned = true;
+                        assignedSystemId = sysId;
+                        assignedSystem = systems.find(s => s.id == sysId).name;
+                        assignedSubsystem = sub;
+                        break;
+                    }
+                }
+                if (assigned) break;
+            }
+            const assignmentDiv = document.getElementById('assignment-info');
+            if (assigned) {
+                document.getElementById('form-section').style.display = 'none';
+                assignmentDiv.innerHTML = `
+                    <b>You are assigned to:</b><br>
+                    System: <b>${assignedSystem}</b><br>
+                    Subsystem: <b>${assignedSubsystem}</b><br>
+                    <button id="leave-btn">Leave</button>
+                `;
+                document.getElementById('leave-btn').onclick = function() {
+                    leaveAssignment(assignedSystemId, assignedSubsystem, username);
+                };
+            } else {
+                document.getElementById('form-section').style.display = '';
+                assignmentDiv.innerHTML = '';
+            }
+        }
+
         // Handle submit
         function submitAssignment() {
             const systemId = document.getElementById('system-select').value;
@@ -200,31 +262,56 @@
 
             // Get existing assignments
             let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+            // Remove user from any previous assignment
+            for (const sysId in assignments) {
+                for (const sub in assignments[sysId]) {
+                    assignments[sysId][sub] = assignments[sysId][sub].filter(u => u.username !== username);
+                }
+            }
             if (!assignments[systemId]) assignments[systemId] = {};
             if (!assignments[systemId][subsystem]) assignments[systemId][subsystem] = [];
 
-            // Prevent duplicate assignment
-            if (!assignments[systemId][subsystem].some(u => u.username === username)) {
-                assignments[systemId][subsystem].push({
-                    fullname: user.fullname,
-                    phone: user.phone,
-                    username: username
-                });
+            // Assign user
+            assignments[systemId][subsystem].push({
+                fullname: user.fullname,
+                phone: user.phone,
+                username: username
+            });
+            localStorage.setItem('assignments', JSON.stringify(assignments));
+            msg.style.color = "#27ae60";
+            msg.textContent = "Assignment successful!";
+            setTimeout(() => {
+                msg.textContent = "";
+                showAssignmentInfo();
+            }, 800);
+        }
+
+        // Leave assignment
+        function leaveAssignment(systemId, subsystem, username) {
+            let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+            if (assignments[systemId] && assignments[systemId][subsystem]) {
+                assignments[systemId][subsystem] = assignments[systemId][subsystem].filter(u => u.username !== username);
                 localStorage.setItem('assignments', JSON.stringify(assignments));
-                msg.style.color = "#27ae60";
-                msg.textContent = "Assignment successful!";
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
-            } else {
-                msg.style.color = "#c0392b";
-                msg.textContent = "You are already assigned here.";
             }
+            document.getElementById('success-message').style.color = "#c0392b";
+            document.getElementById('success-message').textContent = "You have left the subsystem.";
+            setTimeout(() => {
+                document.getElementById('success-message').textContent = "";
+                showAssignmentInfo();
+            }, 1000);
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('loggedIn');
+            localStorage.removeItem('username');
+            window.location.href = 'login.html';
         }
 
         // On page load
         greetUser();
         populateSystems();
+        showAssignmentInfo();
     </script>
 </body>
 </html>

@@ -48,7 +48,12 @@
         .navbar-center li a.active, .navbar-center li a:hover {
             background: #0056b3;
         }
-        .navbar-right .login-btn {
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .navbar-right .login-btn, .navbar-right .logout-btn {
             color: #fff;
             text-decoration: none;
             background: #0056b3;
@@ -56,9 +61,16 @@
             border-radius: 6px;
             font-weight: bold;
             transition: background 0.2s;
+            border: none;
+            cursor: pointer;
         }
-        .navbar-right .login-btn:hover {
+        .navbar-right .login-btn:hover, .navbar-right .logout-btn:hover {
             background: #0074d9;
+        }
+        #doctor-credentials {
+            font-size: 1em;
+            color: #bde0ff;
+            margin-right: 10px;
         }
         .main-section {
             max-width: 1100px;
@@ -121,7 +133,9 @@
             <li><a href="#">About</a></li>
         </ul>
         <div class="navbar-right">
-            <a href="login.html" class="login-btn">Login</a>
+            <span id="doctor-credentials"></span>
+            <a href="login.html" class="login-btn" id="login-btn" style="display:none;">Login</a>
+            <button class="logout-btn" id="logout-btn" style="display:none;" onclick="logout()">Logout</button>
         </div>
     </nav>
 
@@ -132,7 +146,7 @@
     </section>
 
     <script>
-        // Full systems array with all subsystems
+        // --- SYSTEMS DATA ---
         const systems = [
             {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
             {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
@@ -168,9 +182,10 @@
             ]}
         ];
 
-        // Render all systems as clickable blue boxes
+        // --- RENDER SYSTEMS ---
         function renderSystems() {
             const grid = document.getElementById('system-grid');
+            grid.innerHTML = '';
             systems.forEach(system => {
                 const box = document.createElement('div');
                 box.className = 'system-box';
@@ -182,7 +197,43 @@
             });
         }
 
+        // --- SHOW DOCTOR CREDENTIALS & BUTTONS ---
+        function showDoctorCredentials() {
+            const loggedIn = localStorage.getItem('loggedIn');
+            const username = localStorage.getItem('username');
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const user = users[username];
+            const credElem = document.getElementById('doctor-credentials');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            if (loggedIn && user) {
+                credElem.innerHTML = `Dr. <b>${user.fullname}</b> | <span style="color:#fff;">${user.phone}</span>`;
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = '';
+            } else {
+                credElem.innerHTML = '';
+                loginBtn.style.display = '';
+                logoutBtn.style.display = 'none';
+            }
+        }
+
+        // --- LOGOUT FUNCTION ---
+        function logout() {
+            localStorage.removeItem('loggedIn');
+            localStorage.removeItem('username');
+            window.location.href = 'login.html';
+        }
+
+        // --- OPTIONAL: REDIRECT TO LOGIN IF NOT SIGNED IN ---
+        // Uncomment below if you want to restrict index.html to logged-in users only
+        // if (!localStorage.getItem('loggedIn') || !localStorage.getItem('username')) {
+        //     window.location.href = 'login.html';
+        // }
+
+        // --- INIT ---
         renderSystems();
+        showDoctorCredentials();
     </script>
 </body>
 </html>
