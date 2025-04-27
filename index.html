@@ -166,7 +166,7 @@
             const grid = document.getElementById('system-grid');
             grid.innerHTML = '<div style="color:#888;">Loading systems...</div>';
 
-            // Try to fetch systems and their subsystems from Supabase
+            // Try to fetch systems and their subsystems from Supabase using nested select
             let { data: systems, error } = await supabase
                 .from('systems')
                 .select('id, name, subsystems ( id, name )')
