@@ -26,6 +26,7 @@
         <ul class="navbar-center">
             <li><a href="index.html">Home</a></li>
             <li><a href="dashboard.html" class="active">Dashboard</a></li>
+            <!-- Assignment button will be added here by JS if not present -->
         </ul>
         <div class="navbar-right">
             <span id="doctor-credentials"></span>
@@ -85,7 +86,6 @@
 
     // --- DASHBOARD LOGIC ---
     function showDashboard() {
-        // Auth check
         const loggedIn = localStorage.getItem('loggedIn');
         const username = localStorage.getItem('username');
         const users = JSON.parse(localStorage.getItem('users') || '{}');
@@ -95,7 +95,6 @@
         document.getElementById('greeting').innerHTML = `Welcome, <b>Dr. ${user.fullname}</b>`;
         document.getElementById('doctor-credentials').innerHTML = `Dr. ${user.fullname} | ${user.phone}`;
 
-        // Assignment check
         const assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
         let assigned = false, sysId, subsystem, sysName;
         for (const sId in assignments) {
@@ -132,7 +131,6 @@
     }
 
     function showAssignmentForm(isChange) {
-        // Populate dropdowns
         const systemSelect = document.getElementById('system-select');
         const subsystemSelect = document.getElementById('subsystem-select');
         systemSelect.innerHTML = '<option value="">Select System</option>';
@@ -212,22 +210,23 @@
         setTimeout(() => { showDashboard(); }, 1000);
     }
 
-    // On load
     document.addEventListener('DOMContentLoaded', showDashboard);
-// Dynamically add "Assignment" button to the navbar
-document.addEventListener('DOMContentLoaded', function() {
-  const navbarCenter = document.querySelector('.navbar-center');
-  if (navbarCenter) {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.href = 'dashboard.html'; // or 'form.html' if that's your assignment page
-    a.textContent = 'Assignment';
-    a.classList.add('btn'); // optional: use your button styling
-    li.appendChild(a);
-    navbarCenter.appendChild(li);
-  }
-});
-</script>
 
+    // Dynamically add "Assignment" button to the navbar if not present
+    document.addEventListener('DOMContentLoaded', function() {
+        const navbarCenter = document.querySelector('.navbar-center');
+        if (navbarCenter && ![...navbarCenter.children].some(li => li.textContent.trim() === 'Assignment')) {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = 'dashboard.html'; // or 'form.html' if that's your assignment page
+            a.textContent = 'Assignment';
+            a.classList.add('btn'); // optional: use your button styling
+            li.appendChild(a);
+            navbarCenter.appendChild(li);
+        }
+    });
+    </script>
 </body>
+</html>
+
 </html>
