@@ -4,149 +4,21 @@
     <meta charset="UTF-8">
     <title>Doctors Availability | CO-DOCTOR</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f8fa;
-            margin: 0;
-        }
-        .navbar {
-            background: #003366;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            height: 60px;
-            justify-content: space-between;
-        }
-        .navbar-left {
-            display: flex;
-            align-items: center;
-        }
-        .logo {
-            height: 38px;
-            margin-right: 12px;
-        }
-        .brand-name {
-            font-weight: bold;
-            font-size: 1.3em;
-        }
-        .navbar-center {
-            display: flex;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            gap: 20px;
-        }
-        .navbar-center li a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: 500;
-            padding: 8px 12px;
-            border-radius: 4px;
-        }
-        .navbar-center li a.active, .navbar-center li a:hover {
-            background: #0056b3;
-        }
-        /* Register button styling */
-        .navbar-center li .register-btn {
-            background: #27ae60;
-            color: #fff !important;
-            font-weight: bold;
-            border-radius: 6px;
-            padding: 8px 18px;
-            transition: background 0.2s;
-        }
-        .navbar-center li .register-btn:hover {
-            background: #219150;
-        }
-        .navbar-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .navbar-right .login-btn, .navbar-right .logout-btn {
-            color: #fff;
-            text-decoration: none;
-            background: #0056b3;
-            padding: 8px 18px;
-            border-radius: 6px;
-            font-weight: bold;
-            transition: background 0.2s;
-            border: none;
-            cursor: pointer;
-        }
-        .navbar-right .login-btn:hover, .navbar-right .logout-btn:hover {
-            background: #0074d9;
-        }
-        #doctor-credentials {
-            font-size: 1em;
-            color: #bde0ff;
-            margin-right: 10px;
-        }
-        .main-section {
-            max-width: 1100px;
-            margin: 40px auto 0 auto;
-            padding: 0 16px;
-        }
-        .main-section h1 {
-            color: #003366;
-            margin-bottom: 24px;
-            text-align: center;
-        }
-        .system-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
-            justify-content: center;
-            margin-top: 40px;
-        }
-        .system-box {
-            background: #0188df;
-            color: #fff;
-            border-radius: 18px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-            width: 320px;
-            min-height: 70px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: transform 0.1s, box-shadow 0.1s;
-            padding: 24px 28px 18px 28px;
-            font-size: 1.18em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-        .system-box:hover {
-            background: #0056b3;
-            transform: translateY(-4px) scale(1.03);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-        }
-        @media (max-width: 700px) {
-            .system-box {
-                width: 95vw;
-                min-width: unset;
-                font-size: 1em;
-                padding: 18px 8px 14px 8px;
-            }
-        }
-    </style>
 </head>
 <body>
     <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar-left">
-            <img src="logo.jpeg" class="logo" alt="CO-DOCTOR Logo">
+            <img src="logo.jpg" class="logo" alt="CO-DOCTOR Logo">
             <span class="brand-name">CO-DOCTOR</span>
         </div>
         <ul class="navbar-center">
             <li><a href="index.html" class="active">Home</a></li>
-            <li><a href="register.html" class="register-btn">Register</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="login.html" id="login-link">Login</a></li>
         </ul>
         <div class="navbar-right">
             <span id="doctor-credentials"></span>
-            <a href="login.html" class="login-btn" id="login-btn" style="display:none;">Login</a>
             <button class="logout-btn" id="logout-btn" style="display:none;" onclick="logout()">Logout</button>
         </div>
     </nav>
@@ -157,8 +29,9 @@
         <div class="system-grid" id="system-grid"></div>
     </section>
 
+    <script src="script.js"></script>
     <script>
-        // --- SYSTEMS DATA ---
+        // Systems data
         const systems = [
             {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
             {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
@@ -194,7 +67,7 @@
             ]}
         ];
 
-        // --- RENDER SYSTEMS ---
+        // Render systems on page load
         function renderSystems() {
             const grid = document.getElementById('system-grid');
             grid.innerHTML = '';
@@ -209,37 +82,30 @@
             });
         }
 
-        // --- SHOW DOCTOR CREDENTIALS & BUTTONS ---
-        function showDoctorCredentials() {
+        // Check login status and update UI
+        document.addEventListener('DOMContentLoaded', function() {
+            renderSystems();
+            
+            // Show/hide login/logout buttons based on login status
             const loggedIn = localStorage.getItem('loggedIn');
             const username = localStorage.getItem('username');
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             const user = users[username];
-            const credElem = document.getElementById('doctor-credentials');
-            const loginBtn = document.getElementById('login-btn');
+            
+            const loginLink = document.getElementById('login-link');
             const logoutBtn = document.getElementById('logout-btn');
-
+            const credentials = document.getElementById('doctor-credentials');
+            
             if (loggedIn && user) {
-                credElem.innerHTML = `Dr. <b>${user.fullname}</b> | <span style="color:#fff;">${user.phone}</span>`;
-                loginBtn.style.display = 'none';
-                logoutBtn.style.display = '';
+                if (loginLink) loginLink.parentElement.style.display = 'none';
+                if (logoutBtn) logoutBtn.style.display = '';
+                if (credentials) credentials.innerHTML = `Dr. <b>${user.fullname || username}</b> | <span>${user.phone || 'N/A'}</span>`;
             } else {
-                credElem.innerHTML = '';
-                loginBtn.style.display = '';
-                logoutBtn.style.display = 'none';
+                if (loginLink) loginLink.parentElement.style.display = '';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                if (credentials) credentials.innerHTML = '';
             }
-        }
-
-        // --- LOGOUT FUNCTION ---
-        function logout() {
-            localStorage.removeItem('loggedIn');
-            localStorage.removeItem('username');
-            window.location.href = 'login.html';
-        }
-
-        // --- INIT ---
-        renderSystems();
-        showDoctorCredentials();
+        });
     </script>
 </body>
 </html>
