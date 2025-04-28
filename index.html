@@ -215,5 +215,21 @@
     // On load
     document.addEventListener('DOMContentLoaded', showDashboard);
     </script>
+    <script>
+// Dynamically add "Assignment" button to the navbar
+document.addEventListener('DOMContentLoaded', function() {
+  const navbarCenter = document.querySelector('.navbar-center');
+  if (navbarCenter) {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = 'dashboard.html'; // or 'form.html' if that's your assignment page
+    a.textContent = 'Assignment';
+    a.classList.add('btn'); // optional: use your button styling
+    li.appendChild(a);
+    navbarCenter.appendChild(li);
+  }
+});
+</script>
+
 </body>
 </html>
