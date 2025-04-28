@@ -2,87 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select System & Subsystem | CO-DOCTOR</title>
+    <title>Assignment Dashboard | CO-DOCTOR</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        body {
-            min-height: 100vh;
-            background: #f5f8fa;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        .form-container {
-            background: #fff;
-            padding: 40px 32px 32px 32px;
-            border-radius: 18px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.09);
-            min-width: 320px;
-            margin: 60px auto 0 auto;
-            max-width: 380px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        h2 {
-            color: #003366;
-            margin-bottom: 16px;
-            font-weight: 700;
-        }
-        .greeting {
-            color: #0188df;
-            margin-bottom: 22px;
-            font-size: 1.07em;
+        .dashboard-greeting {
             text-align: center;
-        }
-        select, .btn {
-            width: 100%;
-            padding: 12px 14px;
-            margin-bottom: 18px;
-            border: 1px solid #b0c4de;
-            border-radius: 7px;
-            font-size: 1em;
-            outline: none;
-            transition: border 0.2s;
-        }
-        select:focus {
-            border: 1.5px solid #0188df;
-        }
-        .btn {
-            background: #0188df;
-            color: #fff;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 0;
-            transition: background 0.2s;
-        }
-        .btn:hover {
-            background: #0056b3;
-        }
-        #leave-btn {
-            background: #e74c3c;
-            color: #fff;
-            border: none;
-            border-radius: 7px;
-            padding: 10px 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 10px;
-        }
-        #leave-btn:hover {
-            background: #c0392b;
+            margin-bottom: 30px;
+            color: #003366;
         }
         #assignment-info {
-            margin-top: 24px;
+            background: #e6f0ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            max-width: 500px;
+            margin: 0 auto 30px auto;
             text-align: center;
-        }
-        #success-message {
-            color: #27ae60;
-            margin-top: 10px;
-            font-size: 1em;
-            min-height: 22px;
+            font-size: 1.1em;
+            line-height: 1.5;
         }
     </style>
 </head>
@@ -90,42 +27,46 @@
     <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar-left">
-            <img src="logo.jpeg" class="logo" alt="CO-DOCTOR Logo">
+            <img src="logo.jpg" class="logo" alt="CO-DOCTOR Logo">
             <span class="brand-name">CO-DOCTOR</span>
         </div>
         <ul class="navbar-center">
             <li><a href="index.html">Home</a></li>
-            <li><a href="#">About</a></li>
+            <li><a href="system.html">Systems</a></li>
+            <li><a href="#" class="active">Assignment</a></li>
         </ul>
         <div class="navbar-right">
-            <a href="#" onclick="logout()" class="login-btn">Logout</a>
+            <span id="doctor-credentials"></span>
+            <button class="logout-btn" id="logout-btn" onclick="logout()">Logout</button>
         </div>
     </nav>
 
+    <!-- Main Content -->
     <section class="main-section">
-        <div class="form-container">
-            <h2>Choose Your System</h2>
-            <div class="greeting" id="greeting"></div>
-            <div id="form-section">
-                <select id="system-select">
-                    <option value="">Select System</option>
-                </select>
-                <select id="subsystem-select" style="display:none;">
-                    <option value="">Select Subsystem</option>
-                </select>
-                <button onclick="submitAssignment()" class="btn" id="submit-btn" style="display:none;">Submit</button>
-            </div>
-            <div id="assignment-info"></div>
+        <div class="dashboard-greeting">
+            <h1 id="greeting"></h1>
+        </div>
+        
+        <!-- Current Assignment Info -->
+        <div id="assignment-info"></div>
+        
+        <!-- Assignment Form -->
+        <div class="form-container" id="form-section">
+            <h2 class="text-center">Choose Your System</h2>
+            <select id="system-select">
+                <option value="">Select System</option>
+            </select>
+            <select id="subsystem-select">
+                <option value="">Select Subsystem</option>
+            </select>
+            <button class="btn" onclick="submitAssignment()">Submit</button>
             <div id="success-message"></div>
         </div>
     </section>
-    <script>
-        // Redirect to login if not signed in
-        if (!localStorage.getItem('loggedIn') || !localStorage.getItem('username')) {
-            window.location.href = 'login.html';
-        }
 
-        // Define systems and subsystems
+    <script src="script.js"></script>
+    <script>
+        // Systems data
         const systems = [
             {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
             {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
@@ -161,157 +102,48 @@
             ]}
         ];
 
-        // Greet user
-        function greetUser() {
-            const username = localStorage.getItem('username');
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            const user = users[username];
-            if (user) {
-                document.getElementById('greeting').innerHTML =
-                    `Welcome, <b>${user.fullname}</b><br>Phone: <b>${user.phone}</b>`;
-            } else {
-                document.getElementById('greeting').innerHTML = "";
-            }
-        }
-
-        // Populate system select
+        // Populate system dropdown
         function populateSystems() {
             const systemSelect = document.getElementById('system-select');
             systems.forEach(system => {
-                const opt = document.createElement('option');
-                opt.value = system.id;
-                opt.textContent = system.name;
-                systemSelect.appendChild(opt);
+                const option = document.createElement('option');
+                option.value = system.id;
+                option.textContent = `${system.id}. ${system.name}`;
+                systemSelect.appendChild(option);
             });
-        }
-
-        // Populate subsystems on system select
-        document.getElementById('system-select').addEventListener('change', function() {
-            const systemId = this.value;
-            const subsystemSelect = document.getElementById('subsystem-select');
-            subsystemSelect.innerHTML = '<option value="">Select Subsystem</option>';
-            if (systemId) {
-                const system = systems.find(s => s.id == systemId);
-                system.subsystems.forEach(sub => {
-                    const opt = document.createElement('option');
-                    opt.value = sub;
-                    opt.textContent = sub;
-                    subsystemSelect.appendChild(opt);
-                });
-                subsystemSelect.style.display = '';
-                document.getElementById('submit-btn').style.display = '';
-            } else {
-                subsystemSelect.style.display = 'none';
-                document.getElementById('submit-btn').style.display = 'none';
-            }
-        });
-
-        // Show assignment info and leave button if already assigned
-        function showAssignmentInfo() {
-            const username = localStorage.getItem('username');
-            let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
-            let assigned = false;
-            let assignedSystem = '', assignedSubsystem = '', assignedSystemId = '';
-            for (const sysId in assignments) {
-                for (const sub in assignments[sysId]) {
-                    if (assignments[sysId][sub].some(u => u.username === username)) {
-                        assigned = true;
-                        assignedSystemId = sysId;
-                        assignedSystem = systems.find(s => s.id == sysId).name;
-                        assignedSubsystem = sub;
-                        break;
+            
+            // Add event listener to populate subsystems when system is selected
+            systemSelect.addEventListener('change', function() {
+                const systemId = this.value;
+                const subsystemSelect = document.getElementById('subsystem-select');
+                subsystemSelect.innerHTML = '<option value="">Select Subsystem</option>';
+                
+                if (systemId) {
+                    const system = systems.find(s => s.id == systemId);
+                    if (system && system.subsystems) {
+                        system.subsystems.forEach(sub => {
+                            const option = document.createElement('option');
+                            option.value = sub;
+                            option.textContent = sub;
+                            subsystemSelect.appendChild(option);
+                        });
                     }
                 }
-                if (assigned) break;
-            }
-            const assignmentDiv = document.getElementById('assignment-info');
-            if (assigned) {
-                document.getElementById('form-section').style.display = 'none';
-                assignmentDiv.innerHTML = `
-                    <b>You are assigned to:</b><br>
-                    System: <b>${assignedSystem}</b><br>
-                    Subsystem: <b>${assignedSubsystem}</b><br>
-                    <button id="leave-btn">Leave</button>
-                `;
-                document.getElementById('leave-btn').onclick = function() {
-                    leaveAssignment(assignedSystemId, assignedSubsystem, username);
-                };
-            } else {
-                document.getElementById('form-section').style.display = '';
-                assignmentDiv.innerHTML = '';
-            }
+            });
         }
 
-        // Handle submit
-        function submitAssignment() {
-            const systemId = document.getElementById('system-select').value;
-            const subsystem = document.getElementById('subsystem-select').value;
-            const msg = document.getElementById('success-message');
-            msg.textContent = "";
-
-            if (!systemId || !subsystem) {
-                msg.style.color = "#c0392b";
-                msg.textContent = "Please select both system and subsystem.";
+        // Check if user is logged in, redirect if not
+        document.addEventListener('DOMContentLoaded', function() {
+            const loggedIn = localStorage.getItem('loggedIn');
+            const username = localStorage.getItem('username');
+            if (!loggedIn || !username) {
+                window.location.href = 'login.html';
                 return;
             }
-
-            // Get user info
-            const username = localStorage.getItem('username');
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            const user = users[username];
-
-            // Get existing assignments
-            let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
-            // Remove user from any previous assignment
-            for (const sysId in assignments) {
-                for (const sub in assignments[sysId]) {
-                    assignments[sysId][sub] = assignments[sysId][sub].filter(u => u.username !== username);
-                }
-            }
-            if (!assignments[systemId]) assignments[systemId] = {};
-            if (!assignments[systemId][subsystem]) assignments[systemId][subsystem] = [];
-
-            // Assign user
-            assignments[systemId][subsystem].push({
-                fullname: user.fullname,
-                phone: user.phone,
-                username: username
-            });
-            localStorage.setItem('assignments', JSON.stringify(assignments));
-            msg.style.color = "#27ae60";
-            msg.textContent = "Assignment successful!";
-            setTimeout(() => {
-                msg.textContent = "";
-                showAssignmentInfo();
-            }, 800);
-        }
-
-        // Leave assignment
-        function leaveAssignment(systemId, subsystem, username) {
-            let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
-            if (assignments[systemId] && assignments[systemId][subsystem]) {
-                assignments[systemId][subsystem] = assignments[systemId][subsystem].filter(u => u.username !== username);
-                localStorage.setItem('assignments', JSON.stringify(assignments));
-            }
-            document.getElementById('success-message').style.color = "#c0392b";
-            document.getElementById('success-message').textContent = "You have left the subsystem.";
-            setTimeout(() => {
-                document.getElementById('success-message').textContent = "";
-                showAssignmentInfo();
-            }, 1000);
-        }
-
-        // Logout function
-        function logout() {
-            localStorage.removeItem('loggedIn');
-            localStorage.removeItem('username');
-            window.location.href = 'login.html';
-        }
-
-        // On page load
-        greetUser();
-        populateSystems();
-        showAssignmentInfo();
+            
+            // Initialize page
+            initFormPage();
+        });
     </script>
 </body>
 </html>
