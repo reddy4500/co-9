@@ -165,31 +165,6 @@ function showAssignmentInfo() {
     }
 }
 
-// ----------- Home Page Credential Display -----------
-function loadHome() {
-    const loggedIn = localStorage.getItem('loggedIn');
-    const username = localStorage.getItem('username');
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    const user = users[username];
-    if (!loggedIn || !user) {
-        window.location.href = 'login.html';
-    } else {
-        const fullname = user.fullname || username;
-        const phone = user.phone || 'N/A';
-        if (document.getElementById('doctor-credentials')) {
-            document.getElementById('doctor-credentials').innerText =
-                `Logged in as: Dr. ${fullname} | Phone: ${phone}`;
-        }
-        // Replace "About" with "Register" in navbar (if not already done in HTML)
-        const aboutLink = document.querySelector('a[href="about.html"]');
-        if (aboutLink) {
-            aboutLink.href = "register.html";
-            aboutLink.textContent = "Register";
-            aboutLink.classList.add('btn'); // Optional: style as button
-        }
-    }
-}
-
 // ----------- Greeting on Form Page -----------
 function greetUser() {
     const username = localStorage.getItem('username');
@@ -197,7 +172,7 @@ function greetUser() {
     const user = users[username];
     if (user && document.getElementById('greeting')) {
         document.getElementById('greeting').innerHTML =
-            `Welcome, <b>${user.fullname}</b><br>Phone: <b>${user.phone}</b>`;
+            `Welcome, <b>Dr. ${user.fullname}</b><br>Phone: <b>${user.phone}</b>`;
     }
 }
 
@@ -207,9 +182,3 @@ function initFormPage() {
     if (typeof populateSystems === "function") populateSystems();
     showAssignmentInfo();
 }
-
-// Call loadHome() on index.html
-if (document.getElementById('doctor-credentials')) {
-    loadHome();
-}
-
