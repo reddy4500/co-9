@@ -48,6 +48,18 @@
         .navbar-center li a.active, .navbar-center li a:hover {
             background: #0056b3;
         }
+        /* Register button styling */
+        .navbar-center li .register-btn {
+            background: #27ae60;
+            color: #fff !important;
+            font-weight: bold;
+            border-radius: 6px;
+            padding: 8px 18px;
+            transition: background 0.2s;
+        }
+        .navbar-center li .register-btn:hover {
+            background: #219150;
+        }
         .navbar-right {
             display: flex;
             align-items: center;
@@ -130,7 +142,7 @@
         </div>
         <ul class="navbar-center">
             <li><a href="index.html" class="active">Home</a></li>
-            <li><a href="#">About</a></li>
+            <li><a href="register.html" class="register-btn">Register</a></li>
         </ul>
         <div class="navbar-right">
             <span id="doctor-credentials"></span>
@@ -225,15 +237,10 @@
             window.location.href = 'login.html';
         }
 
-        // --- OPTIONAL: REDIRECT TO LOGIN IF NOT SIGNED IN ---
-        // Uncomment below if you want to restrict index.html to logged-in users only
-        // if (!localStorage.getItem('loggedIn') || !localStorage.getItem('username')) {
-        //     window.location.href = 'login.html';
-        // }
-
         // --- INIT ---
         renderSystems();
         showDoctorCredentials();
     </script>
 </body>
 </html>
+
