@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assignment Dashboard | CO-DOCTOR</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .dashboard-greeting {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #003366;
+        }
+        #assignment-info {
+            background: #e6f0ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            max-width: 500px;
+            margin: 0 auto 30px auto;
+            text-align: center;
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <img src="logo.jpg" class="logo" alt="CO-DOCTOR Logo">
+            <span class="brand-name">CO-DOCTOR</span>
+        </div>
+        <ul class="navbar-center">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="system.html">Systems</a></li>
+            <li><a href="#" class="active">Assignment</a></li>
+        </ul>
+        <div class="navbar-right">
+            <span id="doctor-credentials"></span>
+            <button class="logout-btn" id="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <section class="main-section">
+        <div class="dashboard-greeting">
+            <h1 id="greeting"></h1>
+        </div>
+        
+        <!-- Current Assignment Info -->
+        <div id="assignment-info"></div>
+        
+        <!-- Assignment Form -->
+        <div class="form-container" id="form-section">
+            <h2 class="text-center">Choose Your System</h2>
+            <select id="system-select">
+                <option value="">Select System</option>
+            </select>
+            <select id="subsystem-select">
+                <option value="">Select Subsystem</option>
+            </select>
+            <button class="btn" onclick="submitAssignment()">Submit</button>
+            <div id="success-message"></div>
+        </div>
+    </section>
+
+    <script src="script.js"></script>
+    <script>
+        // Systems data
+        const systems = [
+            {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
+            {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
+            {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
+            {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
+            {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
+            {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
+            {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
+            {id: 8, name: "Casualty", subsystems: [
+                "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
+                "COTM (medical/surgical)",
+                "DSO (surgery)",
+                "Pulmo (casualty/other)",
+                "ENT",
+                "Ophthal",
+                "Psy"
+            ]},
+            {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
+            {id: 10, name: "OBG & Labour Room", subsystems: [
+                "Labour Room (Morning/Night)",
+                "Admissions",
+                "HDU",
+                "Labour Room Intern",
+                "POW 1",
+                "POW 2",
+                "PHW",
+                "OP"
+            ]},
+            {id: 11, name: "Anaesthesia", subsystems: [
+                "SS H",
+                "Old Building",
+                "Full Duty"
+            ]}
+        ];
+
+        // Populate system dropdown
+        function populateSystems() {
+            const systemSelect = document.getElementById('system-select');
+            systems.forEach(system => {
+                const option = document.createElement('option');
+                option.value = system.id;
+                option.textContent = `${system.id}. ${system.name}`;
+                systemSelect.appendChild(option);
+            });
+            
+            // Add event listener to populate subsystems when system is selected
+            systemSelect.addEventListener('change', function() {
+                const systemId = this.value;
+                const subsystemSelect = document.getElementById('subsystem-select');
+                subsystemSelect.innerHTML = '<option value="">Select Subsystem</option>';
+                
+                if (systemId) {
+                    const system = systems.find(s => s.id == systemId);
+                    if (system && system.subsystems) {
+                        system.subsystems.forEach(sub => {
+                            const option = document.createElement('option');
+                            option.value = sub;
+                            option.textContent = sub;
+                            subsystemSelect.appendChild(option);
+                        });
+                    }
+                }
+            });
+        }
+
+        // Check if user is logged in, redirect if not
+        document.addEventListener('DOMContentLoaded', function() {
+            const loggedIn = localStorage.getItem('loggedIn');
+            const username = localStorage.getItem('username');
+            if (!loggedIn || !username) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Initialize page
+            initFormPage();
+        });
+    </script>
+</body>
+</html>

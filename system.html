@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>System Details | CO-DOCTOR</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <img src="logo.jpg" class="logo" alt="CO-DOCTOR Logo">
+            <span class="brand-name">CO-DOCTOR</span>
+        </div>
+        <ul class="navbar-center">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="#" class="active">System</a></li>
+            <li><a href="form.html">Assignment</a></li>
+        </ul>
+        <div class="navbar-right">
+            <span id="doctor-credentials"></span>
+            <a href="login.html" class="login-btn" id="login-btn">Login</a>
+            <button class="logout-btn" id="logout-btn" style="display:none;" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <!-- System Details -->
+    <section class="main-section">
+        <h1 id="system-name">System Details</h1>
+        <div class="subsystem-list" id="subsystem-list"></div>
+    </section>
+
+    <script src="script.js"></script>
+    <script>
+        // Systems data
+        const systems = [
+            {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
+            {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
+            {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
+            {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
+            {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
+            {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
+            {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
+            {id: 8, name: "Casualty", subsystems: [
+                "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
+                "COTM (medical/surgical)",
+                "DSO (surgery)",
+                "Pulmo (casualty/other)",
+                "ENT",
+                "Ophthal",
+                "Psy"
+            ]},
+            {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
+            {id: 10, name: "OBG & Labour Room", subsystems: [
+                "Labour Room (Morning/Night)",
+                "Admissions",
+                "HDU",
+                "Labour Room Intern",
+                "POW 1",
+                "POW 2",
+                "PHW",
+                "OP"
+            ]},
+            {id: 11, name: "Anaesthesia", subsystems: [
+                "SS H",
+                "Old Building",
+                "Full Duty"
+            ]}
+        ];
+
+        // Function to get URL parameters
+        function getUrlParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Display system details and assignments
+        function displaySystemDetails() {
+            const systemId = getUrlParam('system');
+            if (!systemId) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            const system = systems.find(s => s.id == systemId);
+            if (!system) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Set system name
+            document.getElementById('system-name').textContent = `${system.id}. ${system.name}`;
+            
+            // Get assignments from localStorage
+            const assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+            const subsystemList = document.getElementById('subsystem-list');
+            
+            // Display subsystems and their assignments
+            system.subsystems.forEach(subsystem => {
+                const subsystemItem = document.createElement('div');
+                subsystemItem.className = 'subsystem-item';
+                
+                const subsystemHeader = document.createElement('div');
+                subsystemHeader.className = 'subsystem-header';
+                subsystemHeader.textContent = subsystem;
+                subsystemItem.appendChild(subsystemHeader);
+                
+                // Add doctors assigned to this subsystem
+                const doctorsList = document.createElement('div');
+                doctorsList.className = 'doctors-list';
+                
+                if (assignments[systemId] && assignments[systemId][subsystem] && assignments[systemId][subsystem].length > 0) {
+                    assignments[systemId][subsystem].forEach(doctor => {
+                        const doctorCard = document.createElement('div');
+                        doctorCard.className = 'doctor-card';
+                        
+                        const doctorName = document.createElement('div');
+                        doctorName.className = 'doctor-name';
+                        doctorName.textContent = `Dr. ${doctor.fullname}`;
+                        
+                        const doctorPhone = document.createElement('div');
+                        doctorPhone.className = 'doctor-phone';
+                        doctorPhone.textContent = `Phone: ${doctor.phone}`;
+                        
+                        doctorCard.appendChild(doctorName);
+                        doctorCard.appendChild(doctorPhone);
+                        doctorsList.appendChild(doctorCard);
+                    });
+                } else {
+                    const noAssignments = document.createElement('div');
+                    noAssignments.className = 'no-assignments';
+                    noAssignments.textContent = 'No doctors assigned yet';
+                    doctorsList.appendChild(noAssignments);
+                }
+                
+                subsystemItem.appendChild(doctorsList);
+                subsystemList.appendChild(subsystemItem);
+            });
+        }
+
+        // Check login status and update UI
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show system details
+            displaySystemDetails();
+            
+            // Update login/logout buttons based on login status
+            const loggedIn = localStorage.getItem('loggedIn');
+            const username = localStorage.getItem('username');
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const user = users[username];
+            
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            const credentials = document.getElementById('doctor-credentials');
+            
+            if (loggedIn && user) {
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (logoutBtn) logoutBtn.style.display = '';
+                if (credentials) credentials.textContent = `Dr. ${user.fullname || username} | ${user.phone || 'N/A'}`;
+            } else {
+                if (loginBtn) loginBtn.style.display = '';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                if (credentials) credentials.textContent = '';
+            }
+        });
+    </script>
+</body>
+</html>
+
+

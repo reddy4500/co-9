@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | CO-DOCTOR</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <img src="logo.jpg" class="logo" alt="CO-DOCTOR Logo">
+            <span class="brand-name">CO-DOCTOR</span>
+        </div>
+        <ul class="navbar-center">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="login.html" class="active">Login</a></li>
+        </ul>
+        <div class="navbar-right"></div>
+    </nav>
+
+    <!-- Login Form -->
+    <div class="form-container">
+        <h2 class="text-center">Doctor Login</h2>
+        <form id="login-form" onsubmit="event.preventDefault(); login();">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit" class="btn">Login</button>
+        </form>
+        <div id="login-error" class="error-message"></div>
+        <p class="text-center" style="margin-top: 20px;">
+            Don't have an account? <a href="register.html">Register here</a>
+        </p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
