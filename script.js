@@ -79,7 +79,6 @@ function submitAssignment() {
     const user = users[username];
 
     let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
-
     // Remove user from previous assignments
     for (const sysId in assignments) {
         for (const sub in assignments[sysId]) {
@@ -132,7 +131,7 @@ function showAssignmentInfo() {
     let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
     let assigned = false;
     let assignedSystem = '', assignedSubsystem = '', assignedSystemId = '';
-    // You should have a `systems` array defined globally on the form.html page
+    // systems array should be defined globally (on form.html)
     for (const sysId in assignments) {
         for (const sub in assignments[sysId]) {
             if (assignments[sysId][sub].some(u => u.username === username)) {
@@ -146,8 +145,10 @@ function showAssignmentInfo() {
         if (assigned) break;
     }
     const assignmentDiv = document.getElementById('assignment-info');
+    const formSection = document.getElementById('form-section');
     if (assigned) {
-        if (document.getElementById('form-section')) document.getElementById('form-section').style.display = 'none';
+        // Hide the assignment form if user is assigned
+        if (formSection) formSection.style.display = 'none';
         assignmentDiv.innerHTML = `
             <b>You are assigned to:</b><br>
             System: <b>${assignedSystem}</b><br>
@@ -158,7 +159,8 @@ function showAssignmentInfo() {
             leaveAssignment(assignedSystemId, assignedSubsystem, username);
         };
     } else {
-        if (document.getElementById('form-section')) document.getElementById('form-section').style.display = '';
+        // Show the form if not assigned
+        if (formSection) formSection.style.display = '';
         assignmentDiv.innerHTML = '';
     }
 }
@@ -178,6 +180,13 @@ function loadHome() {
             document.getElementById('doctor-credentials').innerText =
                 `Logged in as: Dr. ${fullname} | Phone: ${phone}`;
         }
+        // Replace "About" with "Register" in navbar (if not already done in HTML)
+        const aboutLink = document.querySelector('a[href="about.html"]');
+        if (aboutLink) {
+            aboutLink.href = "register.html";
+            aboutLink.textContent = "Register";
+            aboutLink.classList.add('btn'); // Optional: style as button
+        }
     }
 }
 
@@ -193,7 +202,6 @@ function greetUser() {
 }
 
 // ----------- Page Initialization -----------
-// Call this on form.html page load
 function initFormPage() {
     greetUser();
     if (typeof populateSystems === "function") populateSystems();
@@ -204,3 +212,4 @@ function initFormPage() {
 if (document.getElementById('doctor-credentials')) {
     loadHome();
 }
+
