@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctors Availability | CO-DOCTOR</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <img src="logo.jpg" class="logo" alt="CO-DOCTOR Logo">
+            <span class="brand-name">CO-DOCTOR</span>
+        </div>
+        <ul class="navbar-center">
+            <li><a href="index.html" class="active">Home</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="login.html" id="login-link">Login</a></li>
+        </ul>
+        <div class="navbar-right">
+            <span id="doctor-credentials"></span>
+            <button class="logout-btn" id="logout-btn" style="display:none;" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main Section -->
+    <section class="main-section">
+        <h1>Hospital Systems</h1>
+        <div class="system-grid" id="system-grid"></div>
+    </section>
+
+    <script src="script.js"></script>
+    <script>
+        // Systems data
+        const systems = [
+            {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
+            {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
+            {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
+            {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
+            {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
+            {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
+            {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
+            {id: 8, name: "Casualty", subsystems: [
+                "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
+                "COTM (medical/surgical)",
+                "DSO (surgery)",
+                "Pulmo (casualty/other)",
+                "ENT",
+                "Ophthal",
+                "Psy"
+            ]},
+            {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
+            {id: 10, name: "OBG & Labour Room", subsystems: [
+                "Labour Room (Morning/Night)",
+                "Admissions",
+                "HDU",
+                "Labour Room Intern",
+                "POW 1",
+                "POW 2",
+                "PHW",
+                "OP"
+            ]},
+            {id: 11, name: "Anaesthesia", subsystems: [
+                "SS H",
+                "Old Building",
+                "Full Duty"
+            ]}
+        ];
+
+        // Render systems on page load
+        function renderSystems() {
+            const grid = document.getElementById('system-grid');
+            grid.innerHTML = '';
+            systems.forEach(system => {
+                const box = document.createElement('div');
+                box.className = 'system-box';
+                box.textContent = `${system.id}. ${system.name}`;
+                box.onclick = () => {
+                    window.location.href = `system.html?system=${system.id}`;
+                };
+                grid.appendChild(box);
+            });
+        }
+
+        // Check login status and update UI
+        document.addEventListener('DOMContentLoaded', function() {
+            renderSystems();
+            
+            // Show/hide login/logout buttons based on login status
+            const loggedIn = localStorage.getItem('loggedIn');
+            const username = localStorage.getItem('username');
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const user = users[username];
+            
+            const loginLink = document.getElementById('login-link');
+            const logoutBtn = document.getElementById('logout-btn');
+            const credentials = document.getElementById('doctor-credentials');
+            
+            if (loggedIn && user) {
+                if (loginLink) loginLink.parentElement.style.display = 'none';
+                if (logoutBtn) logoutBtn.style.display = '';
+                if (credentials) credentials.innerHTML = `Dr. <b>${user.fullname || username}</b> | <span>${user.phone || 'N/A'}</span>`;
+            } else {
+                if (loginLink) loginLink.parentElement.style.display = '';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                if (credentials) credentials.innerHTML = '';
+            }
+        });
+    </script>
+</body>
+</html>
+

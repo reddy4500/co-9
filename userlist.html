@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Subsystem Users | CO-DOCTOR</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .main-section {
+            max-width: 700px;
+            margin: 40px auto 0 auto;
+            padding: 0 16px;
+        }
+        .subsystem-title {
+            font-weight: 600;
+            font-size: 1.3em;
+            color: #003366;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: center;
+        }
+        .user-card {
+            background: #e6f0ff;
+            color: #0056b3;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            width: 300px;
+            min-height: 40px;
+            padding: 18px 12px;
+            font-size: 1.07em;
+            text-align: center;
+        }
+        .user-name {
+            font-weight: 600;
+            color: #003366;
+        }
+        .user-phone {
+            color: #0188df;
+            font-size: 0.97em;
+        }
+        .no-users {
+            color: #b2bec3;
+            font-style: italic;
+            text-align: center;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <img src="logo.jpeg" class="logo" alt="CO-DOCTOR Logo">
+            <span class="brand-name">CO-DOCTOR</span>
+        </div>
+        <ul class="navbar-center">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="#">About</a></li>
+        </ul>
+        <div class="navbar-right">
+            <a href="login.html" class="login-btn">Login</a>
+        </div>
+    </nav>
+
+    <section class="main-section">
+        <div id="subsystem-title" class="subsystem-title"></div>
+        <div class="user-list" id="user-list"></div>
+        <div id="no-users" class="no-users"></div>
+    </section>
+    <script>
+        function getParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                systemId: parseInt(params.get('system'), 10),
+                subsystem: params.get('subsystem')
+            };
+        }
+
+        function renderUsers() {
+            const {systemId, subsystem} = getParams();
+            document.getElementById('subsystem-title').textContent = `Subsystem: ${subsystem}`;
+
+            const assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+            const users = assignments[systemId]?.[subsystem] || [];
+            const userList = document.getElementById('user-list');
+            const noUsers = document.getElementById('no-users');
+            userList.innerHTML = '';
+            noUsers.textContent = '';
+
+            if (users.length === 0) {
+                noUsers.textContent = 'No users assigned to this subsystem yet.';
+                return;
+            }
+            users.forEach(user => {
+                const div = document.createElement('div');
+                div.className = 'user-card';
+                div.innerHTML = `
+                    <div class="user-name">${user.fullname}</div>
+                    <div class="user-phone">${user.phone}</div>
+                `;
+                userList.appendChild(div);
+            });
+        }
+        renderUsers();
+    </script>
+</body>
+</html>
