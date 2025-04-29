@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assignment Dashboard | CO-DOCTOR</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .dashboard-greeting {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #003366;
+        }
+        #assignment-info {
+            background: #e6f0ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            max-width: 500px;
+            margin: 0 auto 30px auto;
+            text-align: center;
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+    </style>
+    <!-- Firebase SDKs (Modular) -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+      import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+      import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDlKfGXZUjHb7NaAt3T945xUSa-9r8y0Vk",
+        authDomain: "co-doctor-e0de4.firebaseapp.com",
+        databaseURL: "https://co-doctor-e0de4-default-rtdb.firebaseio.com",
+        projectId: "co-doctor-e0de4",
+        storageBucket: "co-doctor-e0de4.appspot.com",
+        messagingSenderId: "278726853369",
+        appId: "1:278726853369:web:939390176e5585bc04d828",
+        measurementId: "G-47XZBZ80VL"
+      };
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Systems data
+      const systems = [
+          {id: 1, name: "Respiratory Medicine (Pulmo)", subsystems: ["RICU", "TB and exam ward", "OP", "Casualty"]},
+          {id: 2, name: "Pediatrics", subsystems: ["Wards", "PICU", "OP"]},
+          {id: 3, name: "General Surgery", subsystems: ["OP", "Wards"]},
+          {id: 4, name: "Radiology", subsystems: ["Morning", "Afternoon", "Night"]},
+          {id: 5, name: "ENT", subsystems: ["Casualty", "Ward"]},
+          {id: 6, name: "Orthopedics", subsystems: ["OP", "Ward/Casualty", "OT", "Casualty"]},
+          {id: 7, name: "SPM (Community Medicine)", subsystems: ["Gudihattham", "Khurikidivagas", "Psychiatry", "CS", "DTC", "SUC", "Department"]},
+          {id: 8, name: "Casualty", subsystems: [
+              "CMO (8am-2pm, 2pm-8pm, 8pm-12am, 8pm-8am)",
+              "COTM (medical/surgical)",
+              "DSO (surgery)",
+              "Pulmo (casualty/other)",
+              "ENT",
+              "Ophthal",
+              "Psy"
+          ]},
+          {id: 9, name: "Medicine", subsystems: ["MICU", "COTM", "BCCO", "MMW", "FMW", "OP"]},
+          {id: 10, name: "OBG & Labour Room", subsystems: [
+              "Labour Room (Morning/Night)",
+              "Admissions",
+              "HDU",
+              "Labour Room Intern",
+              "POW 1",
+              "POW 2",
+              "PHW",
+              "OP"
+          ]},
+          {id: 11, name: "Anaesthesia", subsystems: [
+              "SS H",
+              "Old Building",
+              "Full Duty"
+          ]}
+      ];
+
+      // Populate system dropdown
+      function populateSystems() {
+          const systemSelect = document.getElementById('system-select');
+          systems.forEach(system => {
+              const option = document.createElement('option');
+              option.value = system.id;
+              option.textContent = `${system.id}. ${system.name}`;
+              systemSelect.appendChild(option);
+          });
+
+          // Add event listener to populate subsystems when system is selected
+          systemSelect.addEventListener('change', function() {
+              const systemId = this.value;
+              const subsystemSelect = document.getElementById('subsystem-select');
+              subsystemSelect.innerHTML = '<option value="">Select Subsystem</option>';
+
+              if (systemId) {
+                  const system = systems.find(s => s.id == systemId);
+                  if (system && system.subsystems) {
+                      system.subsystems.forEach(sub => {
+                          const option = document.createElement('option');
+                          option.value = sub;
+                          option.textContent = sub;
+                          subsystemSelect.appendChild(option);
+                      });
+                  }
+              }
+          });
+      }
+
+      // Show greeting and doctor credentials
+      async function showGreeting(user) {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+              const data = userDoc.data();
+              document.getElementById('greeting').innerHTML =
+                  `Welcome, Dr. ${data.fullname}<br>Phone: ${data.phone}`;
+              document.getElementById('doctor-credentials').innerText =
+                  `Dr. ${data.fullname} (${data.phone})`;
+              // Save for later use
+              window.currentUserProfile = data;
+          }
+      }
+
+      // Show assignment info
+      async function showAssignmentInfo(user) {
+          const assignmentDiv = document.getElementById('assignment-info');
+          const formSection = document.getElementById('form-section');
+          let assigned = false;
+          let assignedSystem = '', assignedSubsystem = '', assignedSystemId = '';
+
+          // Check all possible assignments for this user
+          for (const sys of systems) {
+              for (const sub of sys.subsystems) {
+                  const assignRef = doc(db, "assignments", `${sys.id}_${sub}`);
+                  const assignSnap = await getDoc(assignRef);
+                  const usersArr = assignSnap.exists() ? assignSnap.data().users || [] : [];
+                  if (usersArr.some(u => u.username === window.currentUserProfile.username)) {
+                      assigned = true;
+                      assignedSystemId = sys.id;
+                      assignedSystem = sys.name;
+                      assignedSubsystem = sub;
+                      break;
+                  }
+              }
+              if (assigned) break;
+          }
+
+          if (assigned) {
+              // Hide the assignment form if user is assigned
+              if (formSection) formSection.style.display = 'none';
+              assignmentDiv.innerHTML = `
+                  <div>
+                      <strong>You are assigned to:</strong><br>
+                      System: ${assignedSystem}<br>
+                      Subsystem: ${assignedSubsystem}<br>
+                      <button id="leave-btn">Leave</button>
+                  </div>
+              `;
+              document.getElementById('leave-btn').onclick = () =>
+                  leaveAssignment(assignedSystemId, assignedSubsystem, window.currentUserProfile.username);
+          } else {
+              if (formSection) formSection.style.display = '';
+              assignmentDiv.innerHTML = '';
+          }
+      }
+
+      // Submit assignment
+      async function submitAssignment() {
+          const systemId = document.getElementById('system-select').value;
+          const subsystem = document.getElementById('subsystem-select').value;
+          const msg = document.getElementById('success-message');
+          msg.textContent = "";
+
+          if (!systemId || !subsystem) {
+              msg.style.color = "#c0392b";
+              msg.innerText = "Please select both system and subsystem!";
+              return;
+          }
+
+          // Remove user from all previous assignments
+          for (const sys of systems) {
+              for (const sub of sys.subsystems) {
+                  const assignRef = doc(db, "assignments", `${sys.id}_${sub}`);
+                  const assignSnap = await getDoc(assignRef);
+                  if (assignSnap.exists()) {
+                      const usersArr = assignSnap.data().users || [];
+                      if (usersArr.some(u => u.username === window.currentUserProfile.username)) {
+                          await updateDoc(assignRef, {
+                              users: arrayRemove({
+                                  fullname: window.currentUserProfile.fullname,
+                                  phone: window.currentUserProfile.phone,
+                                  username: window.currentUserProfile.username
+                              })
+                          });
+                      }
+                  }
+              }
+          }
+
+          // Assign user to new system/subsystem
+          const assignRef = doc(db, "assignments", `${systemId}_${subsystem}`);
+          try {
+              await setDoc(assignRef, {}, { merge: true }); // Ensure the doc exists
+              await updateDoc(assignRef, {
+                  users: arrayUnion({
+                      fullname: window.currentUserProfile.fullname,
+                      phone: window.currentUserProfile.phone,
+                      username: window.currentUserProfile.username
+                  })
+              });
+              msg.style.color = "#27ae60";
+              msg.innerText = "Assignment successful!";
+              setTimeout(() => {
+                  msg.innerText = "";
+                  showAssignmentInfo(auth.currentUser);
+              }, 700);
+          } catch (error) {
+              msg.style.color = "#c0392b";
+              msg.innerText = "Error assigning: " + error.message;
+          }
+      }
+
+      // Leave assignment
+      async function leaveAssignment(systemId, subsystem, username) {
+          const assignRef = doc(db, "assignments", `${systemId}_${subsystem}`);
+          try {
+              await updateDoc(assignRef, {
+                  users: arrayRemove({
+                      fullname: window.currentUserProfile.fullname,
+                      phone: window.currentUserProfile.phone,
+                      username: window.currentUserProfile.username
+                  })
+              });
+              const msg = document.getElementById('success-message');
+              msg.style.color = "#c0392b";
+              msg.innerText = "You have left the subsystem.";
+              setTimeout(() => {
+                  msg.innerText = "";
+                  showAssignmentInfo(auth.currentUser);
+              }, 1000);
+          } catch (error) {
+              alert("Error leaving assignment: " + error.message);
+          }
+      }
+
+      // Logout
+      window.logout = function() {
+          signOut(auth).then(() => {
+              window.location.href = 'login.html';
+          });
+      };
+
+      // On page load
+      document.addEventListener('DOMContentLoaded', () => {
+          onAuthStateChanged(auth, async (user) => {
+              if (!user) {
+                  window.location.href = 'login.html';
+                  return;
+              }
+              populateSystems();
+              await showGreeting(user);
+              await showAssignmentInfo(user);
+              window.submitAssignment = submitAssignment; // Expose for button
+          });
+      });
+    </script>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <img src="logo.jpeg" class="logo" alt="CO-DOCTOR">
+            <span class="brand-name">Rajiv Gandhi Institute of Medical Sciences, Adilabad</span>
+        </div>
+        <ul class="navbar-center">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="system.html">Systems</a></li>
+            <li><a href="#" class="active">Assignment</a></li>
+        </ul>
+        <div class="navbar-right">
+            <span id="doctor-credentials"></span>
+            <button class="logout-btn" id="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <section class="main-section">
+        <div class="dashboard-greeting">
+            <h1 id="greeting"></h1>
+        </div>
+        
+        <!-- Current Assignment Info -->
+        <div id="assignment-info"></div>
+        
+        <!-- Assignment Form -->
+        <div class="form-container" id="form-section">
+            <h2 class="text-center">Choose Your System</h2>
+            <select id="system-select">
+                <option value="">Select System</option>
+            </select>
+            <select id="subsystem-select">
+                <option value="">Select Subsystem</option>
+            </select>
+            <button class="btn" onclick="submitAssignment()">Submit</button>
+            <div id="success-message"></div>
+        </div>
+    </section>
+</body>
+</html>
+
