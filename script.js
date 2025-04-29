@@ -1,68 +1,7 @@
-// ----------- User Registration -----------
-function register() {
-    const fullname = document.getElementById('reg-fullname').value.trim();
-    const phone = document.getElementById('reg-phone').value.trim();
-    const username = document.getElementById('reg-username').value.trim();
-    const password = document.getElementById('reg-password').value.trim();
-    const errorElem = document.getElementById('register-error');
+// ----------- Assignment Functions Using Firebase -----------
 
-    if (!fullname || !phone || !username || !password) {
-        errorElem.style.color = "red";
-        errorElem.innerText = "Please fill in all fields.";
-        return;
-    }
-    if (!/^\d{10}$/.test(phone)) {
-        errorElem.style.color = "red";
-        errorElem.innerText = "Please enter a valid 10-digit phone number.";
-        return;
-    }
-    let users = JSON.parse(localStorage.getItem('users') || '{}');
-    if (users[username]) {
-        errorElem.style.color = "red";
-        errorElem.innerText = "Username already exists. Please choose another.";
-        return;
-    }
-    users[username] = {
-        password: password,
-        fullname: fullname,
-        phone: phone
-    };
-    localStorage.setItem('users', JSON.stringify(users));
-    errorElem.style.color = "green";
-    errorElem.innerText = "Registration successful! Redirecting to login...";
-    setTimeout(() => {
-        window.location.href = 'login.html';
-    }, 1200);
-}
-
-// ----------- User Login -----------
-function login() {
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const errorElem = document.getElementById('login-error');
-
-    let users = JSON.parse(localStorage.getItem('users') || '{}');
-    if (users[username] && users[username].password === password) {
-        localStorage.setItem('loggedIn', 'true');
-        localStorage.setItem('username', username);
-        window.location.href = 'form.html';
-    } else {
-        errorElem.style.color = "red";
-        errorElem.innerText = "Invalid credentials!";
-    }
-}
-
-// ----------- Logout -----------
-function logout() {
-    localStorage.removeItem('loggedIn');
-    localStorage.removeItem('username');
-    window.location.href = 'login.html';
-}
-
-// ----------- Assignment Functions -----------
-
-// Assign user to system/subsystem
-function submitAssignment() {
+// Submit assignment
+async function submitAssignment() {
     const systemId = document.getElementById('system-select').value;
     const subsystem = document.getElementById('subsystem-select').value;
     const msg = document.getElementById('success-message');
@@ -74,48 +13,72 @@ function submitAssignment() {
         return;
     }
 
-    const username = localStorage.getItem('username');
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    const user = users[username];
+    // Get the currently logged-in user
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        msg.style.color = "#c0392b";
+        msg.innerText = "You must be logged in to make assignments.";
+        return;
+    }
 
-    let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
-    // Remove user from previous assignments
-    for (const sysId in assignments) {
-        for (const sub in assignments[sysId]) {
-            assignments[sysId][sub] = assignments[sysId][sub].filter(u => u.username !== username);
+    // Fetch user profile from Firestore
+    const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
+    if (!userDoc.exists) {
+        msg.style.color = "#c0392b";
+        msg.innerText = "User profile not found.";
+        return;
+    }
+    const userProfile = userDoc.data();
+
+    // Remove user from all previous assignments
+    const assignmentsRef = firebase.firestore().collection("assignments");
+    const allAssignments = await assignmentsRef.get();
+    for (const doc of allAssignments.docs) {
+        const data = doc.data();
+        if (data.users && Array.isArray(data.users)) {
+            const userIndex = data.users.findIndex(u => u.username === userProfile.username);
+            if (userIndex >= 0) {
+                await assignmentsRef.doc(doc.id).update({
+                    users: firebase.firestore.FieldValue.arrayRemove(data.users[userIndex])
+                });
+            }
         }
     }
 
-    if (!assignments[systemId]) assignments[systemId] = {};
-    if (!assignments[systemId][subsystem]) assignments[systemId][subsystem] = [];
+    // Add user to the new assignment
+    const assignmentDocId = `${systemId}_${subsystem}`;
+    await assignmentsRef.doc(assignmentDocId).set({
+        users: firebase.firestore.FieldValue.arrayUnion({
+            fullname: userProfile.fullname,
+            phone: userProfile.phone,
+            username: userProfile.username
+        })
+    }, { merge: true });
 
-    // Prevent duplicate assignment
-    if (!assignments[systemId][subsystem].some(u => u.username === username)) {
-        assignments[systemId][subsystem].push({
-            fullname: user.fullname,
-            phone: user.phone,
-            username: username
-        });
-        localStorage.setItem('assignments', JSON.stringify(assignments));
-        msg.style.color = "#27ae60";
-        msg.innerText = "Assignment successful!";
-        setTimeout(() => {
-            msg.innerText = "";
-            showAssignmentInfo();
-        }, 700);
-    } else {
-        msg.style.color = "#c0392b";
-        msg.innerText = "You are already assigned to this subsystem.";
-    }
+    msg.style.color = "#27ae60";
+    msg.innerText = "Assignment successful!";
+    setTimeout(() => {
+        msg.innerText = "";
+        showAssignmentInfo();
+    }, 700);
 }
 
-// Remove user from their assignment
-function leaveAssignment(systemId, subsystem, username) {
-    let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
-    if (assignments[systemId] && assignments[systemId][subsystem]) {
-        assignments[systemId][subsystem] = assignments[systemId][subsystem].filter(u => u.username !== username);
-        localStorage.setItem('assignments', JSON.stringify(assignments));
-    }
+// Leave assignment
+async function leaveAssignment(systemId, subsystem, username) {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+    const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
+    if (!userDoc.exists) return;
+    const userProfile = userDoc.data();
+
+    await firebase.firestore().collection("assignments").doc(`${systemId}_${subsystem}`).update({
+        users: firebase.firestore.FieldValue.arrayRemove({
+            fullname: userProfile.fullname,
+            phone: userProfile.phone,
+            username: userProfile.username
+        })
+    });
+
     const msg = document.getElementById('success-message');
     msg.style.color = "#c0392b";
     msg.innerText = "You have left the subsystem.";
@@ -125,25 +88,33 @@ function leaveAssignment(systemId, subsystem, username) {
     }, 1000);
 }
 
-// Display the user's current assignment and show "Leave" button
-function showAssignmentInfo() {
-    const username = localStorage.getItem('username');
-    let assignments = JSON.parse(localStorage.getItem('assignments') || '{}');
+// Show assignment info
+async function showAssignmentInfo() {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+    const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
+    if (!userDoc.exists) return;
+    const userProfile = userDoc.data();
+
     let assigned = false;
     let assignedSystem = '', assignedSubsystem = '', assignedSystemId = '';
-    // systems array should be defined globally (on form.html)
-    for (const sysId in assignments) {
-        for (const sub in assignments[sysId]) {
-            if (assignments[sysId][sub].some(u => u.username === username)) {
-                assigned = true;
-                assignedSystemId = sysId;
-                assignedSystem = typeof systems !== "undefined" && systems.find(s => s.id == sysId) ? systems.find(s => s.id == sysId).name : sysId;
-                assignedSubsystem = sub;
-                break;
-            }
+
+    // Check all assignments for this user
+    const assignmentsRef = firebase.firestore().collection("assignments");
+    const allAssignments = await assignmentsRef.get();
+
+    for (const doc of allAssignments.docs) {
+        const data = doc.data();
+        if (data.users && data.users.some(u => u.username === userProfile.username)) {
+            const [sysId, sub] = doc.id.split('_');
+            assigned = true;
+            assignedSystemId = sysId;
+            assignedSystem = typeof systems !== "undefined" && systems.find(s => s.id == sysId) ? systems.find(s => s.id == sysId).name : sysId;
+            assignedSubsystem = sub;
+            break;
         }
-        if (assigned) break;
     }
+
     const assignmentDiv = document.getElementById('assignment-info');
     const formSection = document.getElementById('form-section');
     if (assigned) {
@@ -156,7 +127,7 @@ function showAssignmentInfo() {
             <button id="leave-btn">Leave</button>
         `;
         document.getElementById('leave-btn').onclick = function() {
-            leaveAssignment(assignedSystemId, assignedSubsystem, username);
+            leaveAssignment(assignedSystemId, assignedSubsystem, userProfile.username);
         };
     } else {
         // Show the form if not assigned
@@ -165,20 +136,27 @@ function showAssignmentInfo() {
     }
 }
 
-// ----------- Greeting on Form Page -----------
-function greetUser() {
-    const username = localStorage.getItem('username');
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    const user = users[username];
-    if (user && document.getElementById('greeting')) {
+// ----------- Greeting on Form Page (Firebase version) -----------
+async function greetUser() {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+    const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
+    if (userDoc.exists && document.getElementById('greeting')) {
+        const userProfile = userDoc.data();
         document.getElementById('greeting').innerHTML =
-            `Welcome, <b>Dr. ${user.fullname}</b><br>Phone: <b>${user.phone}</b>`;
+            `Welcome, <b>Dr. ${userProfile.fullname}</b><br>Phone: <b>${userProfile.phone}</b>`;
     }
 }
 
 // ----------- Page Initialization -----------
 function initFormPage() {
-    greetUser();
-    if (typeof populateSystems === "function") populateSystems();
-    showAssignmentInfo();
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (!user) {
+            window.location.href = 'login.html';
+            return;
+        }
+        greetUser();
+        if (typeof populateSystems === "function") populateSystems();
+        showAssignmentInfo();
+    });
 }
